@@ -7,5 +7,5 @@ def update_title():
 
 
 @Ez.on(TreeRenderer.WillRender)
-def on_incoming_request(response):
+def on_tree_will_render(response):
     update_title()
