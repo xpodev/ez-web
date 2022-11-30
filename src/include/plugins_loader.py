@@ -1,8 +1,10 @@
 import sys
 import re
 from importlib import import_module, reload
-from core.ez import Ez
+from ez import Ez
+from ez.builtins_events import Plugins
 from pathlib import Path
+
 
 # This is mocking a database
 enabled_plugins = set()
@@ -38,6 +40,8 @@ def load_plugins():
         if not _import_plugin(f"builtins/{plugin.name}"):
             print(f"Failed to load builtin plugin {plugin.name}")
 
+    Ez.emit(Plugins.WillLoad)
+
     for plugin in enabled_plugins:
         _import_plugin(f"plugins.{plugin}")
 
@@ -45,11 +49,11 @@ def load_plugins():
 def activate_plugin(plugin: str):
     if plugin not in enabled_plugins:
         _import_plugin(f"plugins/{plugin}")
-        Ez.emit("plugins.activate", plugin)
+        Ez.emit(Plugins.Enabled, plugin)
         enabled_plugins.add(plugin)
 
 
 def deactivate_plugin(plugin: str):
     if plugin in enabled_plugins:
-        Ez.emit("plugins.deactivate", plugin)
+        Ez.emit(Plugins.Disabled, plugin)
         enabled_plugins.remove(plugin)
