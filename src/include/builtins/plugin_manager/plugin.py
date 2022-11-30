@@ -21,8 +21,3 @@ def on_activate(request: Request):
 def on_deactivate(request: Request):
     plugin_name = request.query_params.get("plugin")
     deactivate(plugin_name)
-
-
-@Ez.on("GET[/bb]")
-def on_bb(request: Request):
-    Ez.response.text(str(Ez.bb))
