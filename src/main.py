@@ -41,7 +41,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         )
 
 
-app.add_middleware(RequestContextMiddleware)   
+app.add_middleware(RequestContextMiddleware)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

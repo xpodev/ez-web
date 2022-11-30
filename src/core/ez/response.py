@@ -1,11 +1,12 @@
 from json import dumps
 
-class _EzResponse: 
+
+class _EzResponse:
     def __init__(self):
         self.headers = {}
         self.status_code = 200
         self.body = None
-    
+
     def status(self, code):
         self.status_code = code
 

@@ -3,6 +3,7 @@ from core.tree_node import TreeNode
 
 print("Loaded")
 
+
 def update_title():
     title_tag = Ez.tree.look_for_tag("title")[0]
     title_tag.children[0] = "New Title"

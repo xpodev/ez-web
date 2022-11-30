@@ -10,8 +10,10 @@ enabled_plugins = set()
 _PLUGIN_ENTRY_POINT = "plugin"
 HERE = Path(__file__).parent
 
+
 def _import_plugin(plugin_dir: str):
-    Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_plugin = plugin_dir.split("/")[-1]
+    Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_plugin = plugin_dir.split(
+        "/")[-1]
 
     plugin_path = Path(f"{HERE}/{plugin_dir}/{_PLUGIN_ENTRY_POINT}.py")
     module_path = re.sub(r"(?:\/|\\)", ".", plugin_dir)
@@ -38,7 +40,6 @@ def load_plugins():
 
     for plugin in enabled_plugins:
         _import_plugin(f"plugins.{plugin}")
-
 
 
 def activate_plugin(plugin: str):

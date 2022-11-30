@@ -26,4 +26,3 @@ def on_deactivate(request: Request):
 @Ez.on("GET[/bb]")
 def on_bb(request: Request):
     Ez.response.text(str(Ez.bb))
-
