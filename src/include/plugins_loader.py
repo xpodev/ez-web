@@ -40,10 +40,12 @@ def load_plugins():
         if not _import_plugin(f"builtins/{plugin.name}"):
             print(f"Failed to load builtin plugin {plugin.name}")
 
-    Ez.emit(Plugins.WillLoad)
+    Ez.emit(Plugins.WillLoad, enabled_plugins)
 
     for plugin in enabled_plugins:
         _import_plugin(f"plugins.{plugin}")
+
+    Ez.emit(Plugins.DidLoad, enabled_plugins)
 
 
 def activate_plugin(plugin: str):
