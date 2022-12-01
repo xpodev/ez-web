@@ -90,7 +90,7 @@ You can now run the app with:
 
 or watch for changes with:
 
-    watchfiles ""python3 src/main.py"" src
+    watchfiles ""py src/main.py"" src
 "
 Info "Happy coding!
 "
