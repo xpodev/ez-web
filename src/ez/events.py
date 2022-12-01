@@ -28,6 +28,12 @@ class Plugins(Enum):
 
     :param plugin_name: The name of the plugin that was disabled.
     """
+    Reloaded = "Plugins.Reloaded"
+    """
+    Called when a plugin is reloaded.
+
+    :param plugin_name: The name of the plugin that was reloaded.
+    """
     Installed = "Plugins.Installed"
     """
     Called when a plugin is installed.
@@ -139,6 +145,18 @@ class HTTP(Enum):
     OPTIONS = "HTTP.OPTIONS"
     """
     Called when a HTTP OPTIONS request is received.
+
+    :param request: The request object.
+    """
+    TRACE = "HTTP.TRACE"
+    """
+    Called when a HTTP TRACE request is received.
+
+    :param request: The request object.
+    """
+    CONNECT = "HTTP.CONNECT"
+    """
+    Called when a HTTP CONNECT request is received.
 
     :param request: The request object.
     """

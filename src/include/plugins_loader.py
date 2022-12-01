@@ -2,7 +2,7 @@ import sys
 import re
 from importlib import import_module, reload
 from ez import Ez
-from ez.builtins_events import Plugins
+from ez.events import Plugins
 from pathlib import Path
 
 

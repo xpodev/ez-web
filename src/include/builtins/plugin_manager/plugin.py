@@ -11,15 +11,13 @@ def deactivate(plugin_name: str):
     disable_plugin(plugin_name)
 
 
+@Ez.post("/api/plugins/activate")
 def on_activate(request: Request):
     plugin_name = request.query_params.get("plugin")
     activate(plugin_name)
 
 
+@Ez.post("/api/plugins/deactivate")
 def on_deactivate(request: Request):
     plugin_name = request.query_params.get("plugin")
     deactivate(plugin_name)
-
-
-Ez.add_route("/activate", on_activate)
-Ez.add_route("/deactivate", on_deactivate)

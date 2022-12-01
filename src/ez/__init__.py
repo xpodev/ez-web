@@ -5,8 +5,8 @@ from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from ez.ez_response import response
-from ez.builtins_events import Plugins
-from ez.builtins_events import HTTP
+from ez.events import Plugins
+from ez.events import HTTP
 
 
 class _Ez(EventEmitter):
