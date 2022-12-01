@@ -8,13 +8,16 @@ _We don't support this yet_
 ## Development
 Windows:
 ```
-./dev.ps1
+powershell setup.ps1
 ```
 
 Linux:
 
-_We don't support this yet, but will add script soon_
+```
+./setup.sh
+```
 
-Mac:
+We don't support Mac yet because we don't have any Macs.
 
-Read Linux
+## Contributing
+We don't have a contributing guide yet, but we're working on it.
