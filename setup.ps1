@@ -80,7 +80,7 @@ Success "Done"
 Write-Output "
 To activate the virtual environment, run:
 
-    venv/Scripts/Activate.ps1
+    .venv/Scripts/Activate.ps1
 
 
 You can now run the app with:
