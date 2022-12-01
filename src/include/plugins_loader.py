@@ -14,7 +14,7 @@ HERE = Path(__file__).parent
 
 
 def _import_plugin(plugin_dir: str):
-    Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_plugin = plugin_dir.split(
+    Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin = plugin_dir.split(
         "/")[-1]
 
     plugin_path = Path(f"{HERE}/{plugin_dir}/{_PLUGIN_ENTRY_POINT}.py")
@@ -33,6 +33,15 @@ def _import_plugin(plugin_dir: str):
 
 
 def load_plugins():
+    """
+    Load all plugins from the plugins directory
+
+    It will also reload the plugins if they are already loaded, which is somewhat
+    heavy, so it's best not to use this on every request.
+
+    You probably won't need to call this function ever since it's called
+    automatically when the server starts
+    """
     for plugin in Path(f"{HERE}/builtins").iterdir():
         if not plugin.is_dir():
             continue
@@ -49,6 +58,13 @@ def load_plugins():
 
 
 def enable_plugin(plugin: str):
+    """
+    Enable a plugin
+
+    If the plugin is already enabled, this function will do nothing
+
+    :param plugin: The name of the plugin to enable
+    """
     if plugin not in enabled_plugins:
         _import_plugin(f"plugins/{plugin}")
         Ez.emit(Plugins.Enabled, plugin)
@@ -56,6 +72,26 @@ def enable_plugin(plugin: str):
 
 
 def disable_plugin(plugin: str):
+    """
+    Disable a plugin
+
+    If the plugin is already disabled, this function will do nothing
+
+    :param plugin: The name of the plugin to disable
+    """
     if plugin in enabled_plugins:
         Ez.emit(Plugins.Disabled, plugin)
         enabled_plugins.remove(plugin)
+
+
+def reload_plugin(plugin: str):
+    """
+    Reload a plugin
+
+    If the plugin is not enabled, this function will do nothing
+
+    :param plugin: The name of the plugin to reload
+    """
+    if plugin in enabled_plugins:
+        Ez.emit(Plugins.Reloaded, plugin)
+        _import_plugin(f"plugins/{plugin}")

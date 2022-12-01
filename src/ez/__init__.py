@@ -65,7 +65,7 @@ class _Ez(EventEmitter):
         """
         Overrides the EventEmitter._add_event_handler method to add a `on_deactivate` event handler to plugins.
         """
-        current_plugin = _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_plugin
+        current_plugin = _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin
 
         def remove_plugin_handler(plugin: str):
             if plugin == current_plugin:
@@ -190,7 +190,7 @@ class _Ez(EventEmitter):
         return _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_app
 
     class __INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__:
-        current_plugin: str = None
+        currently_loaded_plugin: str = None
         current_app = FastAPI()
 
 
