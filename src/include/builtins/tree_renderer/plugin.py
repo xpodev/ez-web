@@ -1,8 +1,8 @@
 from ez import Ez
 from ez.builtins_events import HTTP
-from .lib.compile_tree import compile_tree
-from .lib.default_tree import get_tree
-from .lib.tree_node import EzTree
+from .transpiler.compile_tree import compile_tree
+from .transpiler.default_tree import get_tree
+from .transpiler.tree_node import EzTree
 from .events import TreeRenderer
 
 @Ez.on(HTTP.In)

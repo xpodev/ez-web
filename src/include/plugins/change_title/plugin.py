@@ -1,6 +1,6 @@
 from ez import Ez
 from include.builtins.tree_renderer.events import TreeRenderer
-from include.builtins.tree_renderer.lib.tree_node import EzTree
+from include.builtins.tree_renderer.transpiler.tree_node import EzTree
 
 @Ez.on(TreeRenderer.WillRender)
 def update_title(tree: EzTree):
