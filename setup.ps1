@@ -80,7 +80,7 @@ Success "Done"
 Write-Output "
 To activate the virtual environment, run:
 
-    venv/Scripts/Activate.ps1
+    .venv/Scripts/Activate.ps1
 
 
 You can now run the app with:
@@ -90,7 +90,7 @@ You can now run the app with:
 
 or watch for changes with:
 
-    watchfiles ""python3 src/main.py"" src
+    watchfiles ""py src/main.py"" src
 "
 Info "Happy coding!
 "
