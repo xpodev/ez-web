@@ -8,7 +8,7 @@ _We don't support this yet_
 ## Development
 Windows:
 ```
-powershell setup.ps1
+powershell ./setup.ps1
 ```
 
 Linux:
