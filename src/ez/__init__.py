@@ -4,7 +4,7 @@ import uvicorn
 from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from ez.ez_response import response
+from ez.ez_response import _EzResponse
 from ez.events import Plugins
 from ez.events import HTTP
 
@@ -12,7 +12,7 @@ from ez.events import HTTP
 class _Ez(EventEmitter):
     def __init__(self):
         super().__init__()
-        self.response = response
+        self.response: _EzResponse = None
         self.request: Request = None
         self._setup()
 
@@ -47,15 +47,16 @@ class _Ez(EventEmitter):
                     return await call_next(request)
 
                 Ez.request = request
+                Ez.response = _EzResponse()
                 Ez.emit(HTTP.In, request)
 
-                response = await call_next(request)
-                Ez.emit(HTTP.Out, response)
+                await call_next(request)
+                Ez.emit(HTTP.Out, Ez.response)
 
                 return Response(
-                    content=Ez.response._body,
-                    headers=Ez.response._headers,
-                    status_code=Ez.response._status_code
+                    content=Ez.response.body,
+                    headers=Ez.response.headers,
+                    status_code=Ez.response.status_code
                 )
 
         self._app.add_middleware(RequestContextMiddleware)
@@ -66,13 +67,123 @@ class _Ez(EventEmitter):
         """
         current_plugin = _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_plugin
 
-        def on_plugin_disabled(plugin: str):
+        def remove_plugin_handler(plugin: str):
             if plugin == current_plugin:
-                self.remove_listener(event, k)
-                self.remove_listener(Plugins.Disabled, on_plugin_disabled)
+                # Necessary for once() to work
+                if event in self._events:
+                    self.remove_listener(event, k)
 
-        super()._add_event_handler(Plugins.Disabled, on_plugin_disabled, on_plugin_disabled)
+                self.remove_listener(Plugins.Disabled, remove_plugin_handler)
+
+        super()._add_event_handler(Plugins.Disabled, remove_plugin_handler, remove_plugin_handler)
+        super()._add_event_handler(Plugins.Reloaded, remove_plugin_handler, remove_plugin_handler)
         return super()._add_event_handler(event, k, v)
+
+
+    # Methods
+    def get(self, route: str):
+        """
+        Adds a GET route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(route, endpoint=handler, methods=["GET"])
+        return decorator
+
+    def post(self, route: str):
+        """
+        Adds a POST route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(route, endpoint=handler, methods=["POST"])
+        return decorator
+
+    def put(self, route: str):
+        """
+        Adds a PUT route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(route, endpoint=handler, methods=["PUT"])
+        return decorator
+
+    def delete(self, route: str):
+        """
+        Adds a DELETE route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(
+                route, endpoint=handler, methods=["DELETE"])
+        return decorator
+
+    def patch(self, route: str):
+        """
+        Adds a PATCH route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(route, endpoint=handler, methods=["PATCH"])
+        return decorator
+
+    def options(self, route: str):
+        """
+        Adds a OPTIONS route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(
+                route, endpoint=handler, methods=["OPTIONS"])
+        return decorator
+
+    def head(self, route: str):
+        """
+        Adds a HEAD route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(route, endpoint=handler, methods=["HEAD"])
+        return decorator
+
+    def trace(self, route: str):
+        """
+        Adds a TRACE route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(route, endpoint=handler, methods=["TRACE"])
+        return decorator
+
+    def connect(self, route: str):
+        """
+        Adds a CONNECT route to the FastAPI app.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(
+                route, endpoint=handler, methods=["CONNECT"])
+        return decorator
+
+    def all(self, route: str):
+        """
+        Adds a route to the FastAPI app that accepts any HTTP method.
+
+        :param route: The route to add.
+        """
+        def decorator(handler: Callable):
+            self._app.add_api_route(route, endpoint=handler, methods=[
+                                    "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE", "CONNECT"])
+        return decorator
 
     @property
     def _app(self):

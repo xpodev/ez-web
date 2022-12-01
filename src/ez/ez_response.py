@@ -87,7 +87,7 @@ class _EzResponse:
         """
         The status code of the response.
         """
-        return 404 if self._status_code == 0 else self._status_code
+        return 200 if self._status_code == 0 else self._status_code
 
     @property
     def body(self):
@@ -95,6 +95,3 @@ class _EzResponse:
         The body of the response.
         """
         return self._body
-
-
-response = _EzResponse()
