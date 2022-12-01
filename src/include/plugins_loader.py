@@ -48,14 +48,14 @@ def load_plugins():
     Ez.emit(Plugins.DidLoad, enabled_plugins)
 
 
-def activate_plugin(plugin: str):
+def enable_plugin(plugin: str):
     if plugin not in enabled_plugins:
         _import_plugin(f"plugins/{plugin}")
         Ez.emit(Plugins.Enabled, plugin)
         enabled_plugins.add(plugin)
 
 
-def deactivate_plugin(plugin: str):
+def disable_plugin(plugin: str):
     if plugin in enabled_plugins:
         Ez.emit(Plugins.Disabled, plugin)
         enabled_plugins.remove(plugin)

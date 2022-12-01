@@ -1,14 +1,14 @@
 from fastapi import Request
 from ez import Ez
-from include.plugins_loader import activate_plugin, deactivate_plugin
+from include.plugins_loader import enable_plugin, disable_plugin
 
 
 def activate(plugin_name: str):
-    activate_plugin(plugin_name)
+    enable_plugin(plugin_name)
 
 
 def deactivate(plugin_name: str):
-    deactivate_plugin(plugin_name)
+    disable_plugin(plugin_name)
 
 
 def on_activate(request: Request):

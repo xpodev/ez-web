@@ -20,7 +20,7 @@ class _Ez(EventEmitter):
         """
         Adds a route to the FastAPI app.
         """
-        self.app.add_api_route(route, endpoint=handler)
+        self._app.add_api_route(route, endpoint=handler)
 
     def run(self, **kwargs):
         """
@@ -29,7 +29,7 @@ class _Ez(EventEmitter):
         self._run(**kwargs)
 
     def _run(self, **kwargs):
-        uvicorn.run(self.app, **kwargs)
+        uvicorn.run(self._app, **kwargs)
 
     def _setup(self):
         """
@@ -45,10 +45,10 @@ class _Ez(EventEmitter):
             async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
                 if request.url.path in docs_urls:
                     return await call_next(request)
-                
+
                 Ez.request = request
                 Ez.emit(HTTP.In, request)
-                
+
                 response = await call_next(request)
                 Ez.emit(HTTP.Out, response)
 
@@ -58,7 +58,7 @@ class _Ez(EventEmitter):
                     status_code=Ez.response._status_code
                 )
 
-        self.app.add_middleware(RequestContextMiddleware)
+        self._app.add_middleware(RequestContextMiddleware)
 
     def _add_event_handler(self, event: str, k: Callable, v: Callable):
         """
@@ -66,17 +66,16 @@ class _Ez(EventEmitter):
         """
         current_plugin = _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_plugin
 
-        def on_deactivate(plugin: str):
+        def on_plugin_disabled(plugin: str):
             if plugin == current_plugin:
                 self.remove_listener(event, k)
-                self.remove_listener(Plugins.Disabled, on_deactivate)
+                self.remove_listener(Plugins.Disabled, on_plugin_disabled)
 
-        super()._add_event_handler(Plugins.Disabled, on_deactivate, on_deactivate)
-
+        super()._add_event_handler(Plugins.Disabled, on_plugin_disabled, on_plugin_disabled)
         return super()._add_event_handler(event, k, v)
 
     @property
-    def app(self):
+    def _app(self):
         return _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_app
 
     class __INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__:
