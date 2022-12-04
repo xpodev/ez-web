@@ -1,7 +1,8 @@
-from ez import Ez
+# from ez import ez
+import ez
 
 
-@Ez.get("/page/{page}")
+@ez.get("/page/{page}")
 def on_page(page: str):
-    Ez.response.html(f"Page: {page}")
+    ez.response.html(f"Page: {page}")
     print("Page:", page)

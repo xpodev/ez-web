@@ -1,7 +1,8 @@
 import sys
 import re
 from importlib import import_module, reload
-from ez import Ez
+# from ez import ez
+import ez
 from ez.events import Plugins
 from pathlib import Path
 
@@ -14,7 +15,7 @@ HERE = Path(__file__).parent
 
 
 def _import_plugin(plugin_dir: str):
-    Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin = plugin_dir.split(
+    ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin = plugin_dir.split(
         "/")[-1]
 
     plugin_path = Path(f"{HERE}/{plugin_dir}/{_PLUGIN_ENTRY_POINT}.py")
@@ -49,12 +50,12 @@ def load_plugins():
         if not _import_plugin(f"builtins/{plugin.name}"):
             print(f"Failed to load builtin plugin {plugin.name}")
 
-    Ez.emit(Plugins.WillLoad, enabled_plugins)
+    ez.emit(Plugins.WillLoad, enabled_plugins)
 
     for plugin in enabled_plugins:
         _import_plugin(f"plugins.{plugin}")
 
-    Ez.emit(Plugins.DidLoad, enabled_plugins)
+    ez.emit(Plugins.DidLoad, enabled_plugins)
 
 
 def enable_plugin(plugin: str):
@@ -67,7 +68,7 @@ def enable_plugin(plugin: str):
     """
     if plugin not in enabled_plugins:
         _import_plugin(f"plugins/{plugin}")
-        Ez.emit(Plugins.Enabled, plugin)
+        ez.emit(Plugins.Enabled, plugin)
         enabled_plugins.add(plugin)
 
 
@@ -80,7 +81,7 @@ def disable_plugin(plugin: str):
     :param plugin: The name of the plugin to disable
     """
     if plugin in enabled_plugins:
-        Ez.emit(Plugins.Disabled, plugin)
+        ez.emit(Plugins.Disabled, plugin)
         enabled_plugins.remove(plugin)
 
 
@@ -93,5 +94,5 @@ def reload_plugin(plugin: str):
     :param plugin: The name of the plugin to reload
     """
     if plugin in enabled_plugins:
-        Ez.emit(Plugins.Reloaded, plugin)
+        ez.emit(Plugins.Reloaded, plugin)
         _import_plugin(f"plugins/{plugin}")

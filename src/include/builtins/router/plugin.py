@@ -1,8 +1,9 @@
-from ez import Ez
+# from ez import ez
+import ez
 from ez.events import HTTP
 from fastapi import Request
 
 
-@Ez.on(HTTP.In)
+@ez.on(HTTP.In)
 def on_http_in(request: Request):
-    Ez.emit(HTTP[request.method], request)
+    ez.emit(HTTP[request.method], request)
