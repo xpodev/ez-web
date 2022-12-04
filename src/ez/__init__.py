@@ -1,3 +1,4 @@
+import sys
 from typing import Callable
 from fastapi import FastAPI, Request, Response
 import uvicorn
@@ -46,17 +47,17 @@ class _Ez(EventEmitter):
                 if request.url.path in docs_urls:
                     return await call_next(request)
 
-                Ez.request = request
-                Ez.response = _EzResponse()
-                Ez.emit(HTTP.In, request)
+                ez.request = request
+                ez.response = _EzResponse()
+                ez.emit(HTTP.In, request)
 
                 await call_next(request)
-                Ez.emit(HTTP.Out, Ez.response)
+                ez.emit(HTTP.Out, ez.response)
 
                 return Response(
-                    content=Ez.response.body,
-                    headers=Ez.response.headers,
-                    status_code=Ez.response.status_code
+                    content=ez.response.body,
+                    headers=ez.response.headers,
+                    status_code=ez.response.status_code
                 )
 
         self._app.add_middleware(RequestContextMiddleware)
@@ -194,4 +195,7 @@ class _Ez(EventEmitter):
         current_app = FastAPI()
 
 
-Ez = _Ez()
+ez = _Ez()
+sys.modules[__name__] = ez
+
+__annotations__ = _Ez.__annotations__  # can we remove this?
