@@ -197,5 +197,3 @@ class _Ez(EventEmitter):
 
 ez = _Ez()
 sys.modules[__name__] = ez
-
-__annotations__ = _Ez.__annotations__  # can we remove this?
