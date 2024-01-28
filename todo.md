@@ -1,2 +1,3 @@
 - [_] Plugin Manager
-- [_] 
+- [_] Add database support
+- [_] Add admin panel
