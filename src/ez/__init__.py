@@ -1,3 +1,4 @@
+from functools import wraps
 import sys
 from typing import Callable
 from fastapi import FastAPI, Request, Response
@@ -8,9 +9,19 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from ez.ez_response import _EzResponse
 from ez.events import Plugins
 from ez.events import HTTP
+from include.builtins.tree_renderer.events import TreeRenderer
+from include.builtins.tree_renderer.pyx.renderer import render
+from include.builtins.tree_renderer.pyx.html.element import Element
+from include.builtins.tree_renderer.pyx.components.component import Component
 
 
 class _Ez(EventEmitter):
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(__original_import__, name)
+
     def __init__(self):
         super().__init__()
         self.response: _EzResponse = None
@@ -88,9 +99,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(route, endpoint=handler, methods=["GET"])
-        return decorator
+        return self._route(route, ["GET"])
 
     def post(self, route: str):
         """
@@ -98,9 +107,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(route, endpoint=handler, methods=["POST"])
-        return decorator
+        return self._route(route, ["POST"])
 
     def put(self, route: str):
         """
@@ -108,9 +115,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(route, endpoint=handler, methods=["PUT"])
-        return decorator
+        return self._route(route, ["PUT"])
 
     def delete(self, route: str):
         """
@@ -118,10 +123,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(
-                route, endpoint=handler, methods=["DELETE"])
-        return decorator
+        return self._route(route, ["DELETE"])
 
     def patch(self, route: str):
         """
@@ -129,9 +131,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(route, endpoint=handler, methods=["PATCH"])
-        return decorator
+        return self._route(route, ["PATCH"])
 
     def options(self, route: str):
         """
@@ -139,10 +139,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(
-                route, endpoint=handler, methods=["OPTIONS"])
-        return decorator
+        return self._route(route, ["OPTIONS"])
 
     def head(self, route: str):
         """
@@ -150,9 +147,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(route, endpoint=handler, methods=["HEAD"])
-        return decorator
+        return self._route(route, ["HEAD"])
 
     def trace(self, route: str):
         """
@@ -160,9 +155,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(route, endpoint=handler, methods=["TRACE"])
-        return decorator
+        return self._route(route, ["TRACE"])
 
     def connect(self, route: str):
         """
@@ -170,10 +163,7 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        def decorator(handler: Callable):
-            self._app.add_api_route(
-                route, endpoint=handler, methods=["CONNECT"])
-        return decorator
+        return self._route(route, ["CONNECT"])
 
     def all(self, route: str):
         """
@@ -181,9 +171,33 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
+        return self._route(route, ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE", "CONNECT"])
+    
+
+    def _route(self, route: str, methods: list[str]):
+        """
+        Adds a route to the FastAPI app.
+
+        :param route: The route to add.
+        :param methods: The methods to allow.
+        """
         def decorator(handler: Callable):
-            self._app.add_api_route(route, endpoint=handler, methods=[
-                                    "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE", "CONNECT"])
+            @wraps(handler)
+            def wrapper(*args, **kwargs):
+                result = handler(*args, **kwargs)
+                match result:
+                    case dict() | list() | int() | float() | bool():
+                        return self.response.json(result)
+                    case str():
+                        return self.response.text(result)
+                    case Component() | Element():
+                        self.emit(TreeRenderer.WillRender, result)
+                        html_string = render(result)
+                        self.emit(TreeRenderer.DidRender, html_string)
+                        return self.response.html(html_string)
+                    case _:
+                        return result
+            self._app.add_api_route(route, endpoint=wrapper, methods=methods)
         return decorator
 
     @property
@@ -196,6 +210,7 @@ class _Ez(EventEmitter):
 
 
 ez = _Ez()
+__original_import__ = sys.modules[__name__]
 sys.modules[__name__] = ez
 
 __annotations__ = _Ez.__annotations__  # can we remove this?

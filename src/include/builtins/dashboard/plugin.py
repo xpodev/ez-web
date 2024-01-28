@@ -1,8 +1,8 @@
 # from ez import ez
 import ez
+from ..tree_renderer.pyx.components.page import Page
 
 
 @ez.get("/page/{page}")
 def on_page(page: str):
-    ez.response.html(f"Page: {page}")
-    print("Page:", page)
+    return Page(page, title=f"EZ Web Framework - Page : {page}")
