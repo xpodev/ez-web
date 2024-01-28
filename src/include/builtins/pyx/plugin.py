@@ -1,5 +1,7 @@
 import ez
 from ez.events import HTTP
+from .html.element import Element
+from .components.component import Component
 from .events import TreeRenderer
 from .renderer import render
 from .default_tree import default_tree
@@ -8,14 +10,16 @@ from .default_tree import default_tree
 @ez.on(HTTP.GET)
 def on_http_get(request):
     def render_tree(response):
-        # Don't render the tree if the response is already set
-        if ez.response.body is not None:
+        if isinstance(ez.response.body, (Component, Element)):
+            ez.emit(TreeRenderer.WillRender, ez.response.body)
+            result = render(ez.response.body)
+            ez.emit(TreeRenderer.DidRender, ez.response.body, result)
+            ez.response.html(result)
             return
 
-        tree = default_tree()
-        ez.emit(TreeRenderer.WillRender, tree)
-        result = render(tree)
-        ez.emit(TreeRenderer.DidRender, tree, result)
-        ez.response.html(result)
-
     ez.once(HTTP.Out, render_tree)
+
+
+@ez.get("/")
+def index():
+    return default_tree()
