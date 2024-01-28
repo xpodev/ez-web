@@ -1,7 +1,7 @@
-from .pyx.style.color import Color
-from .pyx.style.style import Style
-from .pyx.html import *
-from .pyx.components import Page
+from .style.color import Color
+from .style.style import Style
+from .html import *
+from .components import Page
 
 
 def default_tree() -> Element:

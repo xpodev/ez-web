@@ -9,10 +9,6 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from ez.ez_response import _EzResponse
 from ez.events import Plugins
 from ez.events import HTTP
-from include.builtins.tree_renderer.events import TreeRenderer
-from include.builtins.tree_renderer.pyx.renderer import render
-from include.builtins.tree_renderer.pyx.html.element import Element
-from include.builtins.tree_renderer.pyx.components.component import Component
 
 
 class _Ez(EventEmitter):
@@ -54,7 +50,9 @@ class _Ez(EventEmitter):
         ]
 
         class RequestContextMiddleware(BaseHTTPMiddleware):
-            async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
+            async def dispatch(
+                self, request: Request, call_next: RequestResponseEndpoint
+            ):
                 if request.url.path in docs_urls:
                     return await call_next(request)
 
@@ -68,7 +66,7 @@ class _Ez(EventEmitter):
                 return Response(
                     content=ez.response.body,
                     headers=ez.response.headers,
-                    status_code=ez.response.status_code
+                    status_code=ez.response.status_code,
                 )
 
         self._app.add_middleware(RequestContextMiddleware)
@@ -77,7 +75,9 @@ class _Ez(EventEmitter):
         """
         Overrides the EventEmitter._add_event_handler method to add a `on_deactivate` event handler to plugins.
         """
-        current_plugin = _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin
+        current_plugin = (
+            _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin
+        )
 
         def remove_plugin_handler(plugin: str):
             if plugin == current_plugin:
@@ -87,10 +87,13 @@ class _Ez(EventEmitter):
 
                 self.remove_listener(Plugins.Disabled, remove_plugin_handler)
 
-        super()._add_event_handler(Plugins.Disabled, remove_plugin_handler, remove_plugin_handler)
-        super()._add_event_handler(Plugins.Reloaded, remove_plugin_handler, remove_plugin_handler)
+        super()._add_event_handler(
+            Plugins.Disabled, remove_plugin_handler, remove_plugin_handler
+        )
+        super()._add_event_handler(
+            Plugins.Reloaded, remove_plugin_handler, remove_plugin_handler
+        )
         return super()._add_event_handler(event, k, v)
-
 
     # Methods
     def get(self, route: str):
@@ -171,8 +174,20 @@ class _Ez(EventEmitter):
 
         :param route: The route to add.
         """
-        return self._route(route, ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE", "CONNECT"])
-    
+        return self._route(
+            route,
+            [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH",
+                "OPTIONS",
+                "HEAD",
+                "TRACE",
+                "CONNECT",
+            ],
+        )
 
     def _route(self, route: str, methods: list[str]):
         """
@@ -181,6 +196,7 @@ class _Ez(EventEmitter):
         :param route: The route to add.
         :param methods: The methods to allow.
         """
+
         def decorator(handler: Callable):
             @wraps(handler)
             def wrapper(*args, **kwargs):
@@ -190,14 +206,11 @@ class _Ez(EventEmitter):
                         return self.response.json(result)
                     case str():
                         return self.response.text(result)
-                    case Component() | Element():
-                        self.emit(TreeRenderer.WillRender, result)
-                        html_string = render(result)
-                        self.emit(TreeRenderer.DidRender, html_string)
-                        return self.response.html(html_string)
                     case _:
                         return result
+
             self._app.add_api_route(route, endpoint=wrapper, methods=methods)
+
         return decorator
 
     @property

@@ -1,1 +1,1 @@
-from include.builtins.tree_renderer.pyx.components import *
+from include.builtins.pyx.components import *

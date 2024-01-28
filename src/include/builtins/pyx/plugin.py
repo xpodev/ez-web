@@ -1,6 +1,7 @@
 import ez
 from ez.events import HTTP
-from .pyx.renderer import render
+from .events import TreeRenderer
+from .renderer import render
 from .default_tree import default_tree
 
 
@@ -11,6 +12,10 @@ def on_http_get(request):
         if ez.response.body is not None:
             return
 
-        ez.response.html(render(default_tree()))
+        tree = default_tree()
+        ez.emit(TreeRenderer.WillRender, tree)
+        result = render(tree)
+        ez.emit(TreeRenderer.DidRender, tree, result)
+        ez.response.html(result)
 
     ez.once(HTTP.Out, render_tree)

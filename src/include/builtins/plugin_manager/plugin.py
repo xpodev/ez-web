@@ -1,7 +1,7 @@
 from fastapi import Request
 
 from ez.html.components import Page
-from ..tree_renderer.pyx.components.plugin_list import PluginList
+from ..pyx.components.plugin_list import PluginList
 from include.plugins_loader import enable_plugin, disable_plugin
 
 import ez

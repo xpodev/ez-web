@@ -1,6 +1,6 @@
 # from ez import ez
 import ez
-from ..tree_renderer.pyx.components.page import Page
+from ..pyx.components.page import Page
 
 
 @ez.get("/page/{page}")
