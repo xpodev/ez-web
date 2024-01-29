@@ -1,7 +1,8 @@
 from functools import wraps
 import sys
 from typing import Callable
-from fastapi import FastAPI, Request, Response
+from fastapi import APIRouter, FastAPI, Request, Response
+from fastapi.responses import RedirectResponse
 import uvicorn
 from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -9,15 +10,11 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from ez.ez_response import _EzResponse
 from ez.events import Plugins
 from ez.events import HTTP
+from .ez_router import _EzRouter
+# from .ez_router import EzRouter
 
 
 class _Ez(EventEmitter):
-    def __getattr__(self, name):
-        try:
-            return super().__getattr__(name)
-        except AttributeError:
-            return getattr(__original_import__, name)
-
     def __init__(self):
         super().__init__()
         self.response: _EzResponse = None
@@ -60,7 +57,10 @@ class _Ez(EventEmitter):
                 ez.response = _EzResponse()
                 ez.emit(HTTP.In, request)
 
-                await call_next(request)
+                result = await call_next(request)
+                if 300 <= result.status_code < 400:
+                    return result
+                
                 ez.emit(HTTP.Out, ez.response)
 
                 return Response(
@@ -95,7 +95,7 @@ class _Ez(EventEmitter):
         )
         return super()._add_event_handler(event, k, v)
 
-    # Methods
+    # region: Methods
     def get(self, route: str):
         """
         Adds a GET route to the FastAPI app.
@@ -207,19 +207,45 @@ class _Ez(EventEmitter):
                     case str():
                         return self.response.text(result)
                     case _:
-                        return result
+                        self.response._body = result
+                        return self.response
 
             self._app.add_api_route(route, endpoint=wrapper, methods=methods)
 
         return decorator
 
+    # endregion
+
+    def router(self, prefix=""):
+        """
+        Creates a router.
+
+        :param prefix: The prefix to add to the router.
+        """
+        return _EzRouter(prefix=prefix, redirect_slashes=True)
+
+
+    def add_router(self, router: APIRouter):
+        """
+        Adds a router to the FastAPI app.
+
+        :param router: The router to add.
+        """
+        self._app.include_router(router)
+
     @property
-    def _app(self):
+    def _app(self) -> FastAPI:
         return _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_app
 
     class __INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__:
         currently_loaded_plugin: str = None
-        current_app = FastAPI()
+        current_app = FastAPI(redirect_slashes=True)
+
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(__original_import__, name)
 
 
 ez = _Ez()
