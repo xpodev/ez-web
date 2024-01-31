@@ -6,6 +6,7 @@ class Element:
         self,
         *children: tuple["Element | Component | str"],
         class_name=None,
+        html_for=None,
         inline=False,
         **kwargs
     ):
@@ -17,3 +18,4 @@ class Element:
         self.props = kwargs
         self.inline = inline
         kwargs["class"] = class_name
+        kwargs["for"] = html_for

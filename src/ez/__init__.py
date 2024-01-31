@@ -8,9 +8,10 @@ from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from ez.ez_response import _EzResponse
-from ez.events import Plugins
+from ez.events import App, Plugins
 from ez.events import HTTP
 from .ez_router import _EzRouter
+
 # from .ez_router import EzRouter
 
 
@@ -34,6 +35,7 @@ class _Ez(EventEmitter):
         self._run(**kwargs)
 
     def _run(self, **kwargs):
+        self._app.add_event_handler("startup", self.emit, App.DidStart)
         uvicorn.run(self._app, **kwargs)
 
     def _setup(self):
@@ -60,7 +62,7 @@ class _Ez(EventEmitter):
                 result = await call_next(request)
                 if 300 <= result.status_code < 400:
                     return result
-                
+
                 ez.emit(HTTP.Out, ez.response)
 
                 return Response(
@@ -222,8 +224,7 @@ class _Ez(EventEmitter):
 
         :param prefix: The prefix to add to the router.
         """
-        return _EzRouter(prefix=prefix, redirect_slashes=True)
-
+        return _EzRouter(prefix=prefix)
 
     def add_router(self, router: APIRouter):
         """

@@ -160,3 +160,14 @@ class HTTP(Enum):
 
     :param request: The request object.
     """
+
+
+class App(Enum):
+    WillStart = "App.WillStart"
+    """
+    Called before the app is started.
+    """
+    DidStart = "App.DidStart"
+    """
+    Called after the app is started.
+    """

@@ -1,6 +1,6 @@
 from .plugin_info import PluginInfo
-from ..html.div import Div
-from .component import Component
+from ez.html import Div
+from ez.html.components import Component
 
 
 class PluginList(Component):

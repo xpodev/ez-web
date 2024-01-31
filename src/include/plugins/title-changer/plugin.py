@@ -6,4 +6,3 @@ from ez.html.components import Page
 def update_title(page: Page):
     page.title = "EZ Web - Blah"
 
-

@@ -6,9 +6,12 @@ import ez
 from ez.events import Plugins
 from pathlib import Path
 
+from ez.log import logger
+
 
 # This is mocking a database
 enabled_plugins = set()
+active_plugins = set()
 
 _PLUGIN_ENTRY_POINT = "plugin"
 HERE = Path(__file__).parent
@@ -30,6 +33,7 @@ def _import_plugin(plugin_dir: str):
     else:
         import_module(module_name)
 
+    active_plugins.add(plugin_dir)
     return True
 
 
@@ -48,7 +52,7 @@ def load_plugins():
             continue
 
         if not _import_plugin(f"builtins/{plugin.name}"):
-            print(f"Failed to load builtin plugin {plugin.name}")
+            logger.error(f"Failed to load builtin plugin {plugin.name}")
 
     ez.emit(Plugins.WillLoad, enabled_plugins)
 
@@ -96,3 +100,12 @@ def reload_plugin(plugin: str):
     if plugin in enabled_plugins:
         ez.emit(Plugins.Reloaded, plugin)
         _import_plugin(f"plugins/{plugin}")
+
+@ez.get("/api/plugins")
+def get_plugins():
+    """
+    Get the list of all plugins
+
+    :return: The list of all plugins
+    """
+    return list(active_plugins)

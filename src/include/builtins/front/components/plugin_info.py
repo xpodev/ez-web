@@ -1,11 +1,12 @@
-from ..html.small import Small
-from ..html.h3 import H3
-from ..html import Div
-from .component import Component
+import dis
+from ez.database.models.plugin import Plugin
+from ez.html import Small, H3, Div
+from ez.html.components import Component
+from ...pyx.html.input import Input
 
 
 class PluginInfo(Component):
-    def __init__(self, plugin):
+    def __init__(self, plugin: Plugin):
         self.plugin = plugin
 
     def render(self):
@@ -16,6 +17,13 @@ class PluginInfo(Component):
                 Small(f"Version: {self.plugin.version}"),
                 Small(f"Author: {self.plugin.author}"),
                 style="display: flex; justify-content: space-between;",
+            ),
+            Div(
+                Input(
+                    type="checkbox",
+                    checked=self.plugin.enabled,
+                    disabled=True,
+                )
             ),
             class_name="plugin-info",
         )

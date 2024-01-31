@@ -30,4 +30,11 @@ def render(component: Element | str) -> str:
 
 
 def render_props(props: dict) -> str:
-    return " ".join([f'{k}="{v}"' for k, v in props.items()])
+    return " ".join(
+        [
+            f'{key}="{value}"'
+            for key, value in props.items() if value is not False
+        ]
+    )
+
+
