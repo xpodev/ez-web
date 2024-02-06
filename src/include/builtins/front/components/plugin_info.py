@@ -1,12 +1,10 @@
 import dis
-from ez.database.models.plugin import Plugin
-from ez.html import Small, H3, Div
-from ez.html.components import Component
-from ...pyx.html.input import Input
+from ez.database.models.plugin import PluginModel
+from ez.pyx import Small, H3, Div, Component, Input
 
 
 class PluginInfo(Component):
-    def __init__(self, plugin: Plugin):
+    def __init__(self, plugin: PluginModel):
         self.plugin = plugin
 
     def render(self):

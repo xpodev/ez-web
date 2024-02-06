@@ -1,6 +1,7 @@
 import ez
 from include.builtins.pyx.events import TreeRenderer
-from ez.html.components import Page
+from ez.pyx import Page
+
 
 @ez.on(TreeRenderer.WillRender)
 def update_title(page: Page):

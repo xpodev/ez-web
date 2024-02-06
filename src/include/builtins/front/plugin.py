@@ -1,20 +1,23 @@
 import ez
 import ez.log as log
 
-from ez.database.models.plugin import Plugin
+from ez.database.models.plugin import PluginModel
 from ez.database import select, session
-from ez.html.components import Page
+from ez.pyx import Page
 from .components.plugin_list import PluginList
 
-router = ez.router("/smack")
 
-@router.get("/")
-def home_page(request):
-    plugins = select(Plugin).where(Plugin.id > 2)
+@ez.get("/plugins")
+def home_page():
+    plugins = select(PluginModel)
     return Page(
         PluginList(session.scalars(plugins)),
     )
 
-log.info("Plugin Manager loaded")
 
-ez.add_router(router)
+@ez.get("/post/{post_id}")
+def post_page(post_id: int):
+    post = select(PluginModel).where(PluginModel.id == post_id).first()
+    return Page(
+        PluginList([post]),
+    )

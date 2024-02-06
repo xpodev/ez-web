@@ -2,15 +2,14 @@ from functools import wraps
 import sys
 from typing import Callable
 from fastapi import APIRouter, FastAPI, Request, Response
-from fastapi.responses import RedirectResponse
 import uvicorn
 from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from ez.ez_response import _EzResponse
-from ez.events import App, Plugins
-from ez.events import HTTP
+from ez.events import App, Plugins, HTTP
 from .ez_router import _EzRouter
+import ez.log as log
 
 # from .ez_router import EzRouter
 
@@ -72,6 +71,9 @@ class _Ez(EventEmitter):
                 )
 
         self._app.add_middleware(RequestContextMiddleware)
+        self._app.exception_handler(Exception)(self._exception_handler)
+        self._app.add_event_handler("startup", lambda: self.emit(App.DidStart))
+        self._app.add_event_handler("shutdown", lambda: self.emit(App.WillStop))
 
     def _add_event_handler(self, event: str, k: Callable, v: Callable):
         """
@@ -96,6 +98,12 @@ class _Ez(EventEmitter):
             Plugins.Reloaded, remove_plugin_handler, remove_plugin_handler
         )
         return super()._add_event_handler(event, k, v)
+
+    def _exception_handler(self, request: Request, exc: Exception):
+        """
+        Handles exceptions in the FastAPI app.
+        """
+        return ez.response.text(str(exc))
 
     # region: Methods
     def get(self, route: str):
@@ -212,6 +220,7 @@ class _Ez(EventEmitter):
                         self.response._body = result
                         return self.response
 
+            log.debug(f"{methods} {route} -> {handler.__name__}")
             self._app.add_api_route(route, endpoint=wrapper, methods=methods)
 
         return decorator
@@ -234,6 +243,12 @@ class _Ez(EventEmitter):
         """
         self._app.include_router(router)
 
+    def include_path(self, path: str):
+        """
+        Get the include path of the app
+        """
+        return f"include/{path}"
+
     @property
     def _app(self) -> FastAPI:
         return _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_app
@@ -254,3 +269,5 @@ __original_import__ = sys.modules[__name__]
 sys.modules[__name__] = ez
 
 __annotations__ = _Ez.__annotations__  # can we remove this?
+
+import include.plugins_loader

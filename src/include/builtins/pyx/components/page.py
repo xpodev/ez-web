@@ -1,25 +1,24 @@
-from ..html import Fragment, Html, Head, Title, Link, Body
+from ..html import Fragment, Html, Body
 from .component import Component
+from ..utilities import get_header
 
 
 class Page(Component):
-    def __init__(self, *children, title=""):
+    def __init__(self, *children, title="", **kwargs):
         self.title = title
         self.children = children
+        self.props = kwargs
 
     def render(self):
         return Fragment(
             "<!DOCTYPE html>",
             Html(
-                Head(
-                    Title(self.title),
-                    Link(
-                        rel="stylesheet",
-                        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
-                    ),
-                ),
+                get_header(title=self.title),
                 Body(
-                    *self.children,
+                    self.body(),
                 ),
             ),
         )
+    
+    def body(self):
+        return Fragment(*self.children)

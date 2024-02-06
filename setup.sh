@@ -23,6 +23,24 @@ info() {
     echo -e "${BLUE}$1${NC}"
 }
 
+load () {
+    local func=$1
+    local label=$2
+    
+    $func &
+    pid=$!
+
+    spin='-\|/'
+
+    i=0
+    while kill -0 $pid 2>/dev/null
+    do
+    i=$(( (i+1) %4 ))
+    printf "\r${spin:$i:1}"
+    sleep .1
+    done
+}
+
 if ! command -v pip &> /dev/null
 then
     error "pip is not installed. Please install it and try again."
