@@ -1,6 +1,5 @@
-import dis
 from ez.database.models.plugin import PluginModel
-from ez.pyx import Small, H3, Div, Component, Input
+from ez.pyx import Small, H3, Div, Component
 
 
 class PluginInfo(Component):
@@ -14,14 +13,15 @@ class PluginInfo(Component):
             Div(
                 Small(f"Version: {self.plugin.version}"),
                 Small(f"Author: {self.plugin.author}"),
-                style="display: flex; justify-content: space-between;",
+                style=Style(
+                    {
+                        "display": "flex",
+                        "justify-content": "space-between",
+                    }
+                )
             ),
             Div(
-                Input(
-                    type="checkbox",
-                    checked=self.plugin.enabled,
-                    disabled=True,
-                )
+                "Enabled" if self.plugin.enabled else "Disabled",
             ),
             class_name="plugin-info",
         )

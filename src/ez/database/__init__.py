@@ -3,6 +3,7 @@ import ez
 from ez.events import App
 from sqlalchemy import *
 from sqlalchemy.orm import Session
+# import logging
 
 
 engine = create_engine(os.environ.get("DATABASE_URL"))
