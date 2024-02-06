@@ -5,7 +5,6 @@ from fastapi import APIRouter, FastAPI, Request, Response
 import uvicorn
 from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from .database.models.plugin import PluginModel
 
 from ez.ez_response import _EzResponse
 from ez.events import App, Plugins, HTTP
@@ -83,7 +82,7 @@ class _Ez(EventEmitter):
             _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin
         )
 
-        def remove_plugin_handler(plugin: PluginModel):
+        def remove_plugin_handler(plugin):
             if plugin == current_plugin:
                 # Necessary for once() to work
                 if event in self._events:

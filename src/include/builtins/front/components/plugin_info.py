@@ -1,5 +1,5 @@
 from ez.database.models.plugin import PluginModel
-from ez.pyx import Small, H3, Div, Component
+from ez.pyx import Small, H3, Div, Component, Style
 
 
 class PluginInfo(Component):

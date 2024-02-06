@@ -1,6 +1,5 @@
 import ez
-from ez.html import *
-from ez.html.components import Page
+from ez.pyx import *
 
 admin_home_router = ez.router("/admin")
 
