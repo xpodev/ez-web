@@ -15,7 +15,7 @@ class Element:
             for child in children
             if child is not None
         ]
-        self.props = kwargs
         self.inline = inline
         kwargs["class"] = class_name
         kwargs["for"] = html_for
+        self.props = kwargs

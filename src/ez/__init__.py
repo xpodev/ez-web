@@ -2,10 +2,10 @@ from functools import wraps
 import sys
 from typing import Callable
 from fastapi import APIRouter, FastAPI, Request, Response
-from fastapi.responses import RedirectResponse
 import uvicorn
 from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from .database.models.plugin import PluginModel
 
 from ez.ez_response import _EzResponse
 from ez.events import App, Plugins
@@ -35,7 +35,6 @@ class _Ez(EventEmitter):
         self._run(**kwargs)
 
     def _run(self, **kwargs):
-        self._app.add_event_handler("startup", self.emit, App.DidStart)
         uvicorn.run(self._app, **kwargs)
 
     def _setup(self):
@@ -72,6 +71,7 @@ class _Ez(EventEmitter):
                 )
 
         self._app.add_middleware(RequestContextMiddleware)
+        self._app.add_event_handler("startup", lambda: self.emit(App.DidStart))
 
     def _add_event_handler(self, event: str, k: Callable, v: Callable):
         """
@@ -81,7 +81,7 @@ class _Ez(EventEmitter):
             _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin
         )
 
-        def remove_plugin_handler(plugin: str):
+        def remove_plugin_handler(plugin: PluginModel):
             if plugin == current_plugin:
                 # Necessary for once() to work
                 if event in self._events:

@@ -1,0 +1,9 @@
+name: Test Plugin
+version: 1.0.0
+description: A test plugin
+author: Ez Web
+license: MIT
+homepage: https://ezweb.xpo.dev/plugins/test-plugin
+repository:
+  - type: git
+    url: https://github.com/xpodev/ezweb-test-plugin.git
