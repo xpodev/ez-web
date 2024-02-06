@@ -38,6 +38,7 @@ from .ol import Ol
 from .option import Option
 from .p import P
 from .pre import Pre
+from .script import Script
 from .section import Section
 from .select import Select
 from .small import Small
