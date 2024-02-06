@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, APIRouter
 from typing import Callable
 from .ez_response import _EzResponse
-from .ez_router import _EzRouter
+from .ez_router import _EzRouter, MiddlewareFunction
 
 response: _EzResponse
 request: Request
@@ -37,7 +37,7 @@ def get(self, route: str) -> Callable:
 
 # Define other methods with type hints
 
-def router(self, prefix: str = "") -> _EzRouter:
+def router(self, prefix: str = "", middleware: list[MiddlewareFunction]=None) -> _EzRouter:
     # Define router method with type hints
     ...
 

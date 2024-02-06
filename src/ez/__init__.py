@@ -2,16 +2,15 @@ from functools import wraps
 import sys
 from typing import Callable
 from fastapi import APIRouter, FastAPI, Request, Response
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from ez.ez_response import _EzResponse
 from ez.events import App, Plugins, HTTP
-from .ez_router import _EzRouter
+from .ez_router import _EzRouter, MiddlewareFunction
 import ez.log as log
-
-# from .ez_router import EzRouter
 
 
 class _Ez(EventEmitter):
@@ -46,12 +45,21 @@ class _Ez(EventEmitter):
             "/openapi.json",
         ]
 
+        STATIC_PATH = "/static"
+
         class RequestContextMiddleware(BaseHTTPMiddleware):
             async def dispatch(
                 self, request: Request, call_next: RequestResponseEndpoint
             ):
                 if request.url.path in docs_urls:
                     return await call_next(request)
+
+                if request.url.path == STATIC_PATH or request.url.path.startswith(
+                    f"{STATIC_PATH}/"
+                ):
+                    result = await call_next(request)
+                    if result.status_code < 400:
+                        return result
 
                 ez.request = request
                 ez.response = _EzResponse()
@@ -69,6 +77,7 @@ class _Ez(EventEmitter):
                     status_code=ez.response.status_code,
                 )
 
+        self._app.mount(STATIC_PATH, StaticFiles(directory="public"), name="static")
         self._app.add_middleware(RequestContextMiddleware)
         self._app.exception_handler(Exception)(self._exception_handler)
         self._app.add_event_handler("startup", lambda: self.emit(App.DidStart))
@@ -226,13 +235,13 @@ class _Ez(EventEmitter):
 
     # endregion
 
-    def router(self, prefix=""):
+    def router(self, prefix="", middleware: list[MiddlewareFunction]=None):
         """
         Creates a router.
 
         :param prefix: The prefix to add to the router.
         """
-        return _EzRouter(prefix=prefix)
+        return _EzRouter(prefix=prefix, middleware=middleware)
 
     def add_router(self, router: APIRouter):
         """
