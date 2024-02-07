@@ -27,7 +27,11 @@ class _EzResponse:
 
         :return: The response object.
         """
-        self._headers[key] = value
+        key = self._format_header(key)
+        if self._headers.get(key):
+            self._headers[key].append(value)
+        else:
+            self._headers[key] = [value]
         return self
 
     def json(self, data):
@@ -75,12 +79,30 @@ class _EzResponse:
         self._body = data
         return self
 
+    def cookie(self, key, value, **kwargs):
+        """
+        Sets a cookie in the response.
+
+        :param key: The key of the cookie.
+        :param value: The value of the cookie.
+        :param kwargs: Additional cookie parameters.
+
+        :return: The response object.
+        """
+        self.header(
+            "Set-Cookie",
+            f"{key}={value}; {'; '.join(f'{k}={v}' for k, v in kwargs.items())}",
+        )
+        return self
+
     @property
     def headers(self):
         """
         The headers of the response.
         """
-        return self._headers
+        return {
+            k: ", ".join(v) if isinstance(v, list) else v for k, v in self._headers.items()
+        }
 
     @property
     def status_code(self):
@@ -95,3 +117,9 @@ class _EzResponse:
         The body of the response.
         """
         return self._body
+
+    def _format_header(self, key: str):
+        """
+        Formats a header key to be title case.
+        """
+        return "-".join([i.capitalize() for i in key.split("-")])
