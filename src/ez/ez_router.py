@@ -2,6 +2,8 @@ from typing import Any, Awaitable, Callable, TypeAlias
 from fastapi.routing import APIRouter
 from starlette.requests import Request
 from starlette.responses import Response
+from inspect import iscoroutinefunction
+from functools import wraps
 
 from ez.ez_response import _EzResponse
 
@@ -51,9 +53,18 @@ class _EzRouter(APIRouter):
     ):
         import ez
 
-        def wrapper(request: Request):
-            result = endpoint(request)
-            ez.response._body = result
+        if iscoroutinefunction(endpoint):
+
+            @wraps(endpoint)
+            async def wrapper(request: Request):
+                result = await endpoint(request)
+                ez.response._body = result
+        else:
+
+            @wraps(endpoint)
+            def wrapper(request: Request):
+                result = endpoint(request)
+                ez.response._body = result
 
         if self.middleware:
             i = -1
@@ -65,6 +76,7 @@ class _EzRouter(APIRouter):
                     self.middleware[i](ez.request, ez.response, next_middleware)
                 else:
                     wrapper(ez.request)
+                    i = -1
 
             return next_middleware
 

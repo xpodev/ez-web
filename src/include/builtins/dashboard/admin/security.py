@@ -2,11 +2,12 @@ import ez
 import argon2
 from ez.database.models.user import UserModel
 
+
 def get_user() -> UserModel:
     return ez.request.user
 
 
-def is_admin(user: UserModel=None):
+def is_admin(user: UserModel = None):
     user = user or get_user()
     if user is None:
         return False
@@ -19,9 +20,11 @@ def login(username, password):
     if user is None:
         return False
 
-    if argon2.verify(password, user.password):
-        # todo: change to jwt
+    try:
+        argon2.PasswordHasher().verify(user.password, password)
         ez.response.cookie("user_id", user.id)
         return True
+    except:
+        pass
 
     return False

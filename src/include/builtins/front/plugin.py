@@ -1,5 +1,4 @@
 import ez
-import ez.log as log
 
 from ez.database.models.plugin import PluginModel
 from ez.database import select, session

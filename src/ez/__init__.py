@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 from pyee import EventEmitter
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from inspect import iscoroutinefunction
 
 from ez.ez_response import _EzResponse
 from ez.events import App, Plugins, HTTP
@@ -216,26 +217,45 @@ class _Ez(EventEmitter):
         """
 
         def decorator(handler: Callable):
-            @wraps(handler)
-            def wrapper(*args, **kwargs):
-                result = handler(*args, **kwargs)
-                match result:
-                    case dict() | list() | int() | float() | bool():
-                        return self.response.json(result)
-                    case str():
-                        return self.response.text(result)
-                    case _:
-                        self.response._body = result
-                        return self.response
+
+            if iscoroutinefunction(handler):
+
+                @wraps(handler)
+                async def wrapper(*args, **kwargs):
+                    result = await handler(*args, **kwargs)
+                    match result:
+                        case dict() | list() | int() | float() | bool():
+                            return self.response.json(result)
+                        case str():
+                            return self.response.text(result)
+                        case _:
+                            self.response._body = result
+                            return self.response
+
+                self._app.add_api_route(route, endpoint=wrapper, methods=methods)
+            else:
+
+                @wraps(handler)
+                def wrapper(*args, **kwargs):
+                    result = handler(*args, **kwargs)
+                    match result:
+                        case dict() | list() | int() | float() | bool():
+                            return self.response.json(result)
+                        case str():
+                            return self.response.text(result)
+                        case _:
+                            self.response._body = result
+                            return self.response
+
+                self._app.add_api_route(route, endpoint=wrapper, methods=methods)
 
             log.debug(f"{methods} {route} -> {handler.__name__}")
-            self._app.add_api_route(route, endpoint=wrapper, methods=methods)
 
         return decorator
 
     # endregion
 
-    def router(self, prefix="", middleware: list[MiddlewareFunction]=None):
+    def router(self, prefix="", middleware: list[MiddlewareFunction] = None):
         """
         Creates a router.
 

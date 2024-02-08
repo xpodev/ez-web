@@ -95,13 +95,25 @@ class _EzResponse:
         )
         return self
 
+    def delete_cookie(self, key):
+        """
+        Deletes a cookie in the response.
+
+        :param key: The key of the cookie to delete.
+
+        :return: The response object.
+        """
+        self.header("Set-Cookie", f"{key}=; Max-Age=0")
+        return self
+
     @property
     def headers(self):
         """
         The headers of the response.
         """
         return {
-            k: ", ".join(v) if isinstance(v, list) else v for k, v in self._headers.items()
+            k: ", ".join(v) if isinstance(v, list) else v
+            for k, v in self._headers.items()
         }
 
     @property
