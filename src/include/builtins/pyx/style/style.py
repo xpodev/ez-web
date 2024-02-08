@@ -1,4 +1,4 @@
-class Style:
+class Style(dict):
     class _StyleProperty:
         def __init__(self, instance: "Style", name: str):
             self.instance = instance

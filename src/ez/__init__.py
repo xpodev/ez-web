@@ -13,7 +13,6 @@ from ez.events import App, Plugins, HTTP
 from .ez_router import _EzRouter, MiddlewareFunction
 import ez.log as log
 
-
 class _Ez(EventEmitter):
     def __init__(self):
         super().__init__()
@@ -78,7 +77,7 @@ class _Ez(EventEmitter):
                     status_code=ez.response.status_code,
                 )
 
-        self._app.mount(STATIC_PATH, StaticFiles(directory="public"), name="static")
+        self._app.mount(STATIC_PATH, StaticFiles(directory="public", html=True), name="static")
         self._app.add_middleware(RequestContextMiddleware)
         self._app.exception_handler(Exception)(self._exception_handler)
         self._app.add_event_handler("startup", lambda: self.emit(App.DidStart))
@@ -223,14 +222,7 @@ class _Ez(EventEmitter):
                 @wraps(handler)
                 async def wrapper(*args, **kwargs):
                     result = await handler(*args, **kwargs)
-                    match result:
-                        case dict() | list() | int() | float() | bool():
-                            return self.response.json(result)
-                        case str():
-                            return self.response.text(result)
-                        case _:
-                            self.response._body = result
-                            return self.response
+                    return ez.response._auto_body(result)
 
                 self._app.add_api_route(route, endpoint=wrapper, methods=methods)
             else:
@@ -238,14 +230,7 @@ class _Ez(EventEmitter):
                 @wraps(handler)
                 def wrapper(*args, **kwargs):
                     result = handler(*args, **kwargs)
-                    match result:
-                        case dict() | list() | int() | float() | bool():
-                            return self.response.json(result)
-                        case str():
-                            return self.response.text(result)
-                        case _:
-                            self.response._body = result
-                            return self.response
+                    return ez.response._auto_body(result)
 
                 self._app.add_api_route(route, endpoint=wrapper, methods=methods)
 

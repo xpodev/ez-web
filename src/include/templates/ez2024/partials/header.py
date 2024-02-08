@@ -1,4 +1,4 @@
-from ez.pyx import Component, Head, Link, Title
+from ez.pyx import Component, Head, Link, Title,Script
 
 
 class Header(Component):
@@ -10,6 +10,18 @@ class Header(Component):
             Link(
                 rel="stylesheet",
                 href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
+            ),
+            Script(
+                src="https://unpkg.com/react@18/umd/react.production.min.js",
+                crossorigin=True
+            ),
+            Script(
+                src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js",
+                crossorigin=True
+            ),
+            Script(
+                src="/static/js/ez.js",
+                defer=True
             ),
             Title(self.title),
         )

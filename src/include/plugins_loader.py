@@ -113,7 +113,7 @@ def get_plugins():
 
     :return: The list of all plugins
     """
-    return list(repository.active_plugins)
+    return PluginModel.all()
 
 
 class PluginRepository:

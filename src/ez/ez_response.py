@@ -1,4 +1,5 @@
 from json import dumps
+from fastapi.encoders import jsonable_encoder
 
 
 class _EzResponse:
@@ -135,3 +136,31 @@ class _EzResponse:
         Formats a header key to be title case.
         """
         return "-".join([i.capitalize() for i in key.split("-")])
+
+    def _auto_body(self, data):
+        """
+        Automatically sets the response body based on the type of the data.
+        """
+        from ez.database.models import Model
+
+        match data:
+            case dict() | int() | float() | bool():
+                return self.json(data)
+            case list():
+                return self.json(
+                    list(
+                        map(
+                            lambda x: (
+                                jsonable_encoder(x) if isinstance(x, Model) else x
+                            ),
+                            data,
+                        )
+                    )
+                )
+            case str():
+                return self.text(data)
+            case Model():
+                return self.json(jsonable_encoder(data))
+            case _:
+                self._body = data
+                return self

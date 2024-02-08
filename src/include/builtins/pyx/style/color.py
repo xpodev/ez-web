@@ -1,4 +1,4 @@
-class Color:
+class Color(dict):
   # region: Pre-defined colors
   BLACK: 'Color'
   BLUE: 'Color'
