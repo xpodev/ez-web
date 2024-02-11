@@ -5,6 +5,7 @@ from .components.component import Component
 from .events import TreeRenderer
 from .renderer import render
 from .default_tree import default_tree
+from .server import mount
 
 
 @ez.on(HTTP.GET)
@@ -23,3 +24,6 @@ def on_http_get(request):
 @ez.get("/")
 def index():
     return default_tree()
+
+
+mount(ez._app)
