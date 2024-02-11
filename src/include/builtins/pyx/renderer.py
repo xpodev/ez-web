@@ -1,6 +1,7 @@
 from .components.component import Component
 from .html.element import Element
 from html import escape
+from .server import db
 
 
 def render(component: Element | str) -> str:
@@ -23,15 +24,26 @@ def render(component: Element | str) -> str:
             raise Exception("Inline components cannot have children")
         return f"<{tag_name} {render_props(props)}/>"
 
-    props_string = render_props(props)
+    props_string = render_props(props, component)
     if props_string != "":
         props_string = " " + props_string
 
     return f"<{tag_name}{props_string}>{children}</{tag_name}>"
 
 
-def render_props(props: dict) -> str:
-    return " ".join(
-        f'{key}="{escape(str(value))}"' if value is not True else key
-        for key, value in props.items()
-    )
+def render_props(props: dict, element: Element) -> str:
+    props_string = ""
+    for key, value in props.items():
+        if callable(value):
+            event = key[2:]
+            db.add_component_event(element, event, value)
+        elif value is True:
+            props_string += f"{key} "
+        else:
+            props_string += f'{key}="{escape(str(value))}" '
+
+    if element in db.component_ids:
+        component_id = db.component_ids[element]
+        props_string += f'pyx-id="{component_id}" pyx-events="{",".join(db.component_events[component_id].keys())}"'
+
+    return props_string
