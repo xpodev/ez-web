@@ -1,14 +1,12 @@
 from . import Model
-from ez.database import Column, Integer, String, Boolean
+from ez.database import Column, Integer, String, Boolean, Text
 
-class Plugin(Model):
-  __tablename__ = 'ez_plugins'
-  
-  id = Column(Integer, primary_key=True)
-  name = Column(String(255))
-  description = Column(String(255))
-  version = Column(String(255))
-  author = Column(String(255))
-  enabled = Column(Boolean, default=False)
 
-  
+class PluginModel(Model):
+    id = Column(Integer, primary_key=True)
+    dir_name = Column(String(255), unique=True, nullable=False)
+    name = Column(String(255))
+    description = Column(Text())
+    version = Column(String(20))
+    author = Column(String(255))
+    enabled = Column(Boolean, default=False)
