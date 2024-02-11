@@ -1,286 +1,326 @@
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=".env.staging")
+del load_dotenv
+
+
+from .args import args, unparsed_args
+
+
+from pathlib import Path
 from functools import wraps
-import sys
-from typing import Callable
-from fastapi import APIRouter, FastAPI, Request, Response
-from fastapi.staticfiles import StaticFiles
-import uvicorn
-from pyee import EventEmitter
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from inspect import iscoroutinefunction
+from typing import Callable
 
-from ez.ez_response import _EzResponse
-from ez.events import App, Plugins, HTTP
-from .ez_router import _EzRouter, MiddlewareFunction
-import ez.log as log
+from ez.web.response import _EzResponse
+from ez.plugins.manager import PluginManager
 
-class _Ez(EventEmitter):
-    def __init__(self):
-        super().__init__()
-        self.response: _EzResponse = None
-        self.request: Request = None
-        self._setup()
+from .web.app import EZApplication
+from .events import Event
+from .events.emitter import EventEmitter
 
-    def add_route(self, route: str, handler: Callable):
-        """
-        Adds a route to the FastAPI app.
-        """
-        self._app.add_api_route(route, endpoint=handler)
+import uvicorn
+from fastapi import FastAPI, Request
 
-    def run(self, **kwargs):
-        """
-        Runs the FastAPI app.
-        """
-        self._run(**kwargs)
-
-    def _run(self, **kwargs):
-        uvicorn.run(self._app, **kwargs)
-
-    def _setup(self):
-        """
-        Sets up the FastAPI app.
-        """
-        docs_urls = [
-            "/docs",
-            "/redoc",
-            "/openapi.json",
-        ]
-
-        STATIC_PATH = "/static"
-
-        class RequestContextMiddleware(BaseHTTPMiddleware):
-            async def dispatch(
-                self, request: Request, call_next: RequestResponseEndpoint
-            ):
-                if request.url.path in docs_urls:
-                    return await call_next(request)
-
-                if request.url.path == STATIC_PATH or request.url.path.startswith(
-                    f"{STATIC_PATH}/"
-                ):
-                    result = await call_next(request)
-                    if result.status_code < 400:
-                        return result
-
-                ez.request = request
-                ez.response = _EzResponse()
-                ez.emit(HTTP.In, request)
-
-                result = await call_next(request)
-                if 300 <= result.status_code < 400:
-                    return result
-
-                ez.emit(HTTP.Out, ez.response)
-
-                return Response(
-                    content=ez.response.body,
-                    headers=ez.response.headers,
-                    status_code=ez.response.status_code,
-                )
-
-        self._app.mount(STATIC_PATH, StaticFiles(directory="public", html=True), name="static")
-        self._app.add_middleware(RequestContextMiddleware)
-        self._app.exception_handler(Exception)(self._exception_handler)
-        self._app.add_event_handler("startup", lambda: self.emit(App.DidStart))
-        self._app.add_event_handler("shutdown", lambda: self.emit(App.WillStop))
-
-    def _add_event_handler(self, event: str, k: Callable, v: Callable):
-        """
-        Overrides the EventEmitter._add_event_handler method to add a `on_deactivate` event handler to plugins.
-        """
-        current_plugin = (
-            _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin
-        )
-
-        def remove_plugin_handler(plugin):
-            if plugin == current_plugin:
-                # Necessary for once() to work
-                if event in self._events:
-                    self.remove_listener(event, k)
-
-                self.remove_listener(Plugins.Disabled, remove_plugin_handler)
-
-        super()._add_event_handler(
-            Plugins.Disabled, remove_plugin_handler, remove_plugin_handler
-        )
-        super()._add_event_handler(
-            Plugins.Reloaded, remove_plugin_handler, remove_plugin_handler
-        )
-        return super()._add_event_handler(event, k, v)
-
-    def _exception_handler(self, request: Request, exc: Exception):
-        """
-        Handles exceptions in the FastAPI app.
-        """
-        return ez.response.text(str(exc))
-
-    # region: Methods
-    def get(self, route: str):
-        """
-        Adds a GET route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["GET"])
-
-    def post(self, route: str):
-        """
-        Adds a POST route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["POST"])
-
-    def put(self, route: str):
-        """
-        Adds a PUT route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["PUT"])
-
-    def delete(self, route: str):
-        """
-        Adds a DELETE route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["DELETE"])
-
-    def patch(self, route: str):
-        """
-        Adds a PATCH route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["PATCH"])
-
-    def options(self, route: str):
-        """
-        Adds a OPTIONS route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["OPTIONS"])
-
-    def head(self, route: str):
-        """
-        Adds a HEAD route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["HEAD"])
-
-    def trace(self, route: str):
-        """
-        Adds a TRACE route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["TRACE"])
-
-    def connect(self, route: str):
-        """
-        Adds a CONNECT route to the FastAPI app.
-
-        :param route: The route to add.
-        """
-        return self._route(route, ["CONNECT"])
-
-    def all(self, route: str):
-        """
-        Adds a route to the FastAPI app that accepts any HTTP method.
-
-        :param route: The route to add.
-        """
-        return self._route(
-            route,
-            [
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "PATCH",
-                "OPTIONS",
-                "HEAD",
-                "TRACE",
-                "CONNECT",
-            ],
-        )
-
-    def _route(self, route: str, methods: list[str]):
-        """
-        Adds a route to the FastAPI app.
-
-        :param route: The route to add.
-        :param methods: The methods to allow.
-        """
-
-        def decorator(handler: Callable):
-
-            if iscoroutinefunction(handler):
-
-                @wraps(handler)
-                async def wrapper(*args, **kwargs):
-                    result = await handler(*args, **kwargs)
-                    return ez.response._auto_body(result)
-
-                self._app.add_api_route(route, endpoint=wrapper, methods=methods)
-            else:
-
-                @wraps(handler)
-                def wrapper(*args, **kwargs):
-                    result = handler(*args, **kwargs)
-                    return ez.response._auto_body(result)
-
-                self._app.add_api_route(route, endpoint=wrapper, methods=methods)
-
-            log.debug(f"{methods} {route} -> {handler.__name__}")
-
-        return decorator
-
-    # endregion
-
-    def router(self, prefix="", middleware: list[MiddlewareFunction] = None):
-        """
-        Creates a router.
-
-        :param prefix: The prefix to add to the router.
-        """
-        return _EzRouter(prefix=prefix, middleware=middleware)
-
-    def add_router(self, router: APIRouter):
-        """
-        Adds a router to the FastAPI app.
-
-        :param router: The router to add.
-        """
-        self._app.include_router(router)
-
-    def include_path(self, path: str):
-        """
-        Get the include path of the app
-        """
-        return f"include/{path}"
-
-    @property
-    def _app(self) -> FastAPI:
-        return _Ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.current_app
-
-    class __INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__:
-        currently_loaded_plugin: str = None
-        current_app = FastAPI(redirect_slashes=True)
-
-    def __getattr__(self, name):
-        try:
-            return super().__getattr__(name)
-        except AttributeError:
-            return getattr(__original_import__, name)
+from . import log
 
 
-ez = _Ez()
-__original_import__ = sys.modules[__name__]
-sys.modules[__name__] = ez
+#region Variables
 
-__annotations__ = _Ez.__annotations__  # can we remove this?
 
-import include.plugins_loader
+response: "_EzResponse | None" = None
+request: "Request | None" = None
+
+SITE_DIR: Path = args.sitedir.resolve()
+EZ_FRAMEWORK_DIR: Path = Path(__file__).parents[2]
+PLUGINS_DIR: Path = SITE_DIR / "plugins"
+
+
+log.info("Starting site:", SITE_DIR)
+
+
+#endregion
+
+
+#region EZ Internal
+
+class _EZ:
+    ez: "_EZ | None" = None
+    ee: EventEmitter
+    app: FastAPI
+    plugin_events: dict[str, list[tuple[str, Callable]]]
+    plugin_manager: PluginManager
+
+    def __init__(self, app: FastAPI | None = None, ee: EventEmitter | None = None) -> None:
+        if self.ez is not None:
+            raise RuntimeError("An instance of _EZ already exists.")
+        _EZ.ez = self
+
+        self.ee = ee or EventEmitter()
+        self.app = app or EZApplication(redirect_slashes=True)
+        self.plugin_events = {}
+        self.plugin_manager = PluginManager(PLUGINS_DIR)
+
+    def add_plugin_event(self, plugin: str, event: str, handler: Callable):
+        if plugin not in self.plugin_events:
+            self.plugin_events[plugin] = []
+        self.plugin_events[plugin].append((event, handler))
+
+    def remove_plugin_events(self, plugin: str):
+        if plugin in self.plugin_events:
+            for event, handler in self.plugin_events[plugin]:
+                self.ee._remove_event_listener(event, handler)
+            del self.plugin_events[plugin]
+
+    def get_plugin_from_handler(self, handler: Callable, __Path=Path) -> str:
+        if not handler.__module__.startswith(self.plugin_manager.PLUGIN_PREFIX):
+            return None
+        name = handler.__module__.removeprefix(self.plugin_manager.PLUGIN_PREFIX + ".").split(".")[0]
+        return self.plugin_manager.get_plugin_info(name).dir_name
+
+_EZ()
+
+
+#endregion
+
+
+#region Event System
+
+
+def on(event: Event, priority_or_f: int = 0, priority: int = 0, __ez=_EZ.ez):
+    """
+    Adds a listener to an event.
+
+    :param event: The event to listen to.
+    :param priority: The priority of the listener.
+    """
+    def _on(f):
+        plugin = __ez.get_plugin_from_handler(f)
+        if plugin:
+            __ez.add_plugin_event(__ez.get_plugin_from_handler(f), event, f)
+        return __ez.ee.on(event, f, priority_or_f)
+    
+    if isinstance(priority_or_f, int):
+        return _on
+    return _on(event, priority_or_f, priority)
+
+
+def once(event: Event, priority_or_f: int = 0, priority: int = 0, __ez=_EZ.ez):
+    """
+    Adds a listener to an event that will only be called once.
+
+    :param event: The event to listen to.
+    :param priority: The priority of the listener.
+    """
+    def _once(f):
+        plugin = __ez.get_plugin_from_handler(f)
+        if plugin:
+            __ez.add_plugin_event(__ez.get_plugin_from_handler(f), event, f)
+        return __ez.ee.once(event, f, priority_or_f)
+
+    if isinstance(priority_or_f, int):
+        return _once
+    return __ez.ee.once(event, priority_or_f, priority)
+
+
+def emit(event: Event, *args, __ez=_EZ.ez, **kwargs):
+    """
+    Emits an event.
+
+    :param event: The event to emit.
+    """
+    return __ez.ez.ee.emit(event, *args, **kwargs)
+
+
+#endregion
+
+
+#region Routing
+
+
+def add_route(route: str, methods: list[str], __ez=_EZ.ez, __wraps=wraps, __iscoroutinefunction=iscoroutinefunction) -> Callable[[Callable], None]:
+    """
+    Adds a route to the FastAPI app.
+
+    :param route: The route to add.
+    :param methods: The methods to allow.
+    """
+
+    def decorator(handler):
+
+        if __iscoroutinefunction(handler):
+
+            @__wraps(handler)
+            async def wrapper(*args, **kwargs):
+                result = await handler(*args, **kwargs)
+                return response._auto_body(result)
+
+            __ez.app.add_api_route(route, endpoint=wrapper, methods=methods)
+        else:
+
+            @__wraps(handler)
+            def wrapper(*args, **kwargs):
+                result = handler(*args, **kwargs)
+                return response._auto_body(result)
+
+            __ez.app.add_api_route(route, endpoint=wrapper, methods=methods)
+
+        log.debug(f"{methods} {route} -> {handler.__name__}")
+
+    return decorator
+
+
+# region: Methods
+
+def get(route: str, __ez=_EZ.ez):
+    """
+    Adds a GET route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["GET"])
+
+def post(route: str):
+    """
+    Adds a POST route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["POST"])
+
+def put(route: str):
+    """
+    Adds a PUT route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["PUT"])
+
+def delete(route: str):
+    """
+    Adds a DELETE route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["DELETE"])
+
+def patch(route: str):
+    """
+    Adds a PATCH route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["PATCH"])
+
+def options(route: str):
+    """
+    Adds a OPTIONS route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["OPTIONS"])
+
+def head(route: str):
+    """
+    Adds a HEAD route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["HEAD"])
+
+def trace(route: str):
+    """
+    Adds a TRACE route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["TRACE"])
+
+def connect(route: str):
+    """
+    Adds a CONNECT route to the FastAPI app.
+
+    :param route: The route to add.
+    """
+    return add_route(route, ["CONNECT"])
+
+def all(route: str):
+    """
+    Adds a route to the FastAPI app that accepts any HTTP method.
+
+    :param route: The route to add.
+    """
+    return add_route(
+        route,
+        [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "OPTIONS",
+            "HEAD",
+            "TRACE",
+            "CONNECT",
+        ],
+    )
+
+# endregion
+
+
+#endregion
+
+
+def _run(host: str = "127.0.0.1", port: int = 8000, __ez=_EZ.ez, uvicorn=uvicorn):
+    if hasattr(__ez.app, "setup"):
+        __ez.app.setup()
+
+    uvicorn.main.main(["--host", host, "--port", port, *unparsed_args])
+
+
+def run(host: str = None, port: int = None, _run=_run):
+    """
+    Run the EZ Web Server.
+    """
+    if host is None:
+        host = args.host
+    if port is None:
+        port = args.port
+    return _run(host, port)
+
+
+_app = _EZ.ez.app
+
+
+#region: Cleanup
+
+
+del EventEmitter
+del Event
+del _EZ
+
+del EZApplication
+del PluginManager
+
+del FastAPI
+del uvicorn
+del _run
+
+del _EzResponse
+del wraps
+del iscoroutinefunction
+del Callable
+
+del Path
+
+__all__ = [
+    "on",
+    "once",
+    "emit",
+    "run",
+]
+
+
+#endregion
+
+
+import include.plugins_loader as _

@@ -20,11 +20,11 @@ HERE = Path(__file__).parent
 
 
 def _import_plugin(plugin_dir: str):
-    ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin = plugin_dir.split(
-        "/"
-    )[
-        -1
-    ]
+    # ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin = plugin_dir.split(
+    #     "/"
+    # )[
+    #     -1
+    # ]
 
     plugin_path = HERE / plugin_dir / f"{_PLUGIN_ENTRY_POINT}.py"
     module_path = re.sub(r"(?:\/|\\)", ".", plugin_dir)
@@ -51,12 +51,17 @@ def load_plugins():
     You probably won't need to call this function ever since it's called
     automatically when the server starts
     """
-    for plugin in Path(f"{HERE}/builtins").iterdir():
-        if not plugin.is_dir():
-            continue
+    # for plugin in Path(f"{HERE}/builtins").iterdir():
+    #     if not plugin.is_dir():
+    #         continue
 
-        if not _import_plugin(f"builtins/{plugin.name}"):
-            logger.error(f"Failed to load builtin plugin {plugin.name}")
+    #     if plugin.name.startswith("_"):
+    #         continue
+
+    #     if not _import_plugin(f"builtins/{plugin.name}"):
+    #         logger.error(f"Failed to load builtin plugin {plugin.name}")
+
+    _import_plugin("builtins/front")
 
     ez.emit(Plugins.WillLoad, enabled_plugins)
 
@@ -143,9 +148,9 @@ class PluginRepository:
         return self.plugins.get(name, None)
 
     def _load(self, plugin: PluginModel):
-        ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin = (
-            plugin
-        )
+        # ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin = (
+        #     plugin
+        # )
         module_name = f"include.plugins.{plugin.dir_name}.{_PLUGIN_ENTRY_POINT}"
         if module_name in sys.modules:
             reload(sys.modules[module_name])
