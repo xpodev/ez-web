@@ -11,6 +11,11 @@ class Header(Component):
                 rel="stylesheet",
                 href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
             ),
+            Link(
+                rel="icon",
+                href="/static/icon-bg.svg",
+                type="image/svg+xml",
+            ),
             Script(
                 src="https://unpkg.com/react@18/umd/react.production.min.js",
                 crossorigin=True
