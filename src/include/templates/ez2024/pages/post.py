@@ -1,4 +1,6 @@
-from ez.pyx import *
+from pyx.html import *
+from pyx.components import *
+from pyx.style import *
 
 
 def render(**props):

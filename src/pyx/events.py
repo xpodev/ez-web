@@ -1,6 +1,6 @@
-from ez.events import Event
+# from ez.events import Event
 
-class TreeRenderer(Event):
+class TreeRenderer:
     WillRender = "TreeRenderer.WillRender"
     """
     Called before the tree is rendered.

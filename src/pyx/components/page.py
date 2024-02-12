@@ -1,4 +1,3 @@
-from ..html import Fragment, Html, Body
 from .component import Component
 from pyx.utilities import get_header
 
@@ -10,6 +9,7 @@ class Page(Component):
         self.props = kwargs
 
     def render(self):
+        from ..html import Fragment, Html, Body
         return Fragment(
             "<!DOCTYPE html>",
             Html(
@@ -21,4 +21,5 @@ class Page(Component):
         )
     
     def body(self):
+        from ..html import Fragment
         return Fragment(*self.children)

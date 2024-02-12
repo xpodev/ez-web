@@ -151,7 +151,7 @@ class PluginRepository:
         # ez.__INTERNAL_VARIABLES_DO_NOT_TOUCH_OR_YOU_WILL_BE_FIRED__.currently_loaded_plugin = (
         #     plugin
         # )
-        module_name = f"include.plugins.{plugin.dir_name}.{_PLUGIN_ENTRY_POINT}"
+        module_name = f"plugins.{plugin.dir_name}.{_PLUGIN_ENTRY_POINT}"
         if module_name in sys.modules:
             reload(sys.modules[module_name])
         else:

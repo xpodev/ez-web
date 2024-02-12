@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=".env.staging")
+load_dotenv(dotenv_path=".env")
 del load_dotenv
 
 

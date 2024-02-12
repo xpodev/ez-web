@@ -1,6 +1,7 @@
+from html import escape
+
 from .components.component import Component
 from .html.element import Element
-from html import escape
 from .server import db
 
 
