@@ -1,5 +1,6 @@
 from html import escape
 
+from .errors import RenderError
 from .components.component import Component
 from .html.element import Element
 from .server import db
@@ -22,7 +23,7 @@ def render(component: Element | str) -> str:
 
     if component.inline:
         if component.children != []:
-            raise Exception("Inline components cannot have children")
+            raise RenderError("Inline components cannot have children")
         return f"<{tag_name} {render_props(props)}/>"
 
     props_string = render_props(props, component)
@@ -32,11 +33,11 @@ def render(component: Element | str) -> str:
     return f"<{tag_name}{props_string}>{children}</{tag_name}>"
 
 
-def render_props(props: dict, element: Element) -> str:
+def render_props(props: dict[str, object], element: Element) -> str:
     props_string = ""
     for key, value in props.items():
         if callable(value):
-            event = key[2:]
+            event = key.removeprefix("on_")
             db.add_component_event(element, event, value)
         elif value is True:
             props_string += f"{key} "
