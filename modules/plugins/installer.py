@@ -37,8 +37,6 @@ def move_file(src: Path, dest: Path, name: str = None):
         name = src.name
     src.rename(dest / name)
 
-    print(f"Moved {src} to {dest / name}")
-
 
 class PluginRepository(BaseModel):
     type: str
