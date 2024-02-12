@@ -7,3 +7,5 @@ homepage: https://ezweb.xpo.dev/plugins/test-plugin
 repository:
   - type: git
     url: https://github.com/xpodev/ezweb-test-plugin.git
+typing-file: __api__.py
+package-name: test-plugin
