@@ -12,4 +12,4 @@ $env:EZ_PYTHONPATH = "$root/core;$siteDir/lib/dependencies;"
 $command = "$root/lib/python/python.exe $root/core/main.py $siteDir --port $port --host $hostname"
 
 Write-Host "$command"
-Start-Process -Wait -NoNewWindow -WorkingDirectory $siteDir -FilePath "cmd" -ArgumentList "/c $command"
+& cmd start "" /d $siteDir /c $command
