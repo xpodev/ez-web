@@ -24,6 +24,7 @@ SITE_DIR: Path = args.sitedir.resolve()
 EZ_FRAMEWORK_DIR: Path = Path(__file__).parents[2]
 PLUGINS_DIR: Path = SITE_DIR / "plugins"
 MODULE_DIR: Path = EZ_FRAMEWORK_DIR / "modules"
+PLUGIN_API_DIR: Path = SITE_DIR / "lib" / "public-api" / "plugins"
 
 
 #endregion
@@ -42,6 +43,7 @@ from utilities.event import Event
 from utilities.event_emitter import EventEmitter
 from web.response import _EzResponse
 from plugins.manager import PluginManager
+from plugins.installer import PluginInstaller
 
 from web.app.app import EZApplication
 
@@ -61,6 +63,7 @@ class _EZ:
 
     plugin_events: dict[str, list[tuple[str, Callable]]]
     plugin_manager: PluginManager
+    plugin_installer: PluginInstaller
 
     mm: ModuleManager
 
@@ -74,6 +77,7 @@ class _EZ:
 
         self.plugin_events = {}
         self.plugin_manager = PluginManager(PLUGINS_DIR)
+        self.plugin_installer = PluginInstaller(self.plugin_manager)
 
         self.mm = ModuleManager(MODULE_DIR)
 
@@ -170,6 +174,22 @@ def disable_plugin(plugin: str, __ez=_EZ.ez):
     plugin_info = __ez.plugin_manager.get_plugin_info(plugin)
     __ez.remove_plugin_events(plugin_info.dir_name)
     return __ez.plugin_manager.disable_plugin(plugin)
+
+
+def install_plugin(path: str | Path, __Path=Path, __ez=_EZ.ez):
+    if isinstance(path, str):
+        path = __Path(path)
+    
+    if path.suffix == ".zip":
+        return __ez.plugin_installer.install_from_zip(path)
+    elif path.is_dir():
+        return __ez.plugin_installer.install_from_path(path)
+    else:
+        raise ValueError("Invalid path to plugin: must be a directory or a zip file.")
+    
+
+def uninstall_plugin(plugin: str, __ez=_EZ.ez):
+    return __ez.plugin_installer.uninstall_plugin(plugin)
 
 
 #endregion
