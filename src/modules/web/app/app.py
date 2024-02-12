@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from ez.web.response import _EzResponse
+from ..response import _EzResponse
 from ez.events import HTTP, App
 
 
@@ -20,12 +20,9 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     ):
         import ez
 
-        # TODO: Refactor to different middlewares
-
         if request.url.path in docs_urls:
             return await call_next(request)
         
-        # TODO: soften hardcoded path
         if request.url.path.startswith("/socket.io"):
             return await call_next(request)
 
@@ -68,5 +65,5 @@ class EZApplication(FastAPI):
         Handles exceptions in the FastAPI app.
         """
         import ez
-
+        
         return ez.response.text(str(exc))
