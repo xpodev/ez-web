@@ -21,7 +21,7 @@ class EventEmitter:
             self._events[event].insert(0, listener)
         else:
             for i, l in enumerate(self._events[event]):
-                if hasattr(l, "__ee_priority__") and l.__ee_priority__ > priority:
+                if hasattr(l, "__ee_priority__") and l.__ee_priority__ != -1 and l.__ee_priority__ > priority:
                     self._events[event].insert(i, listener)
                     break
             else:
