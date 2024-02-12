@@ -1,4 +1,4 @@
-from .event import Event
+from utilities.event import Event
 
 class Settings(Event):
     WillLoad = "Settings.WillLoad"

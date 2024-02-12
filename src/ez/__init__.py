@@ -3,7 +3,7 @@ load_dotenv(dotenv_path=".env")
 del load_dotenv
 
 
-from .args import args, unparsed_args
+from args import args, unparsed_args
 
 
 from pathlib import Path
@@ -11,19 +11,7 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from typing import Callable
 
-from .web.response import _EzResponse
-from .plugins.manager import PluginManager
-
-from .modules.manager import ModuleManager
-
-from .web.app import EZApplication
-from .events import Event
-from .events.emitter import EventEmitter
-
-import uvicorn
 from fastapi import FastAPI, Request
-
-from . import log
 
 
 #region Variables
@@ -38,7 +26,27 @@ PLUGINS_DIR: Path = SITE_DIR / "plugins"
 MODULE_DIR: Path = EZ_FRAMEWORK_DIR / "modules"
 
 
-log.info("Starting site:", SITE_DIR)
+#endregion
+
+
+#region Load Modules
+
+
+import sys
+sys.path.append(str(MODULE_DIR))
+
+import log
+
+from modules.manager import ModuleManager
+from utilities.event import Event
+from utilities.event_emitter import EventEmitter
+from web.response import _EzResponse
+from plugins.manager import PluginManager
+
+from web.app.app import EZApplication
+
+sys.path.remove(str(MODULE_DIR))
+del sys
 
 
 #endregion
@@ -57,7 +65,7 @@ class _EZ:
     mm: ModuleManager
 
     def __init__(self, app: FastAPI | None = None, ee: EventEmitter | None = None) -> None:
-        if self.ez is not None:
+        if _EZ.ez is not None:
             raise RuntimeError("An instance of _EZ already exists.")
         _EZ.ez = self
 
@@ -146,7 +154,22 @@ def emit(event: Event, *args, __ez=_EZ.ez, **kwargs):
 #region Plugin System
 
 
-# TODO: Implement
+def load_plugins(__ez=_EZ.ez):
+    from ez.database.models.plugin import PluginModel
+
+    names = [plugin.dir_name for plugin in PluginModel.filter_by(enabled=True).all()]
+
+    return __ez.plugin_manager.load_plugins(names)
+
+
+def enable_plugin(plugin: str, __ez=_EZ.ez):
+    return __ez.plugin_manager.enable_plugin(plugin)
+
+
+def disable_plugin(plugin: str, __ez=_EZ.ez):
+    plugin_info = __ez.plugin_manager.get_plugin_info(plugin)
+    __ez.remove_plugin_events(plugin_info.dir_name)
+    return __ez.plugin_manager.disable_plugin(plugin)
 
 
 #endregion
@@ -155,7 +178,8 @@ def emit(event: Event, *args, __ez=_EZ.ez, **kwargs):
 #region Module System
 
 
-# TODO: Implement
+def reload_modules(__ez=_EZ.ez):
+    return __ez.mm.load_modules(reload=True)
 
 
 def get_modules(__ez=_EZ.ez):
@@ -305,7 +329,7 @@ def _setup(__ez=_EZ.ez):
     if hasattr(__ez.app, "setup"):
         __ez.app.setup()
 
-    from .modules.events import Modules
+    from ez.events import Modules
 
     emit(Modules.WillLoad)
     if not __ez.mm.load_modules(reload=False):
@@ -316,22 +340,24 @@ def _setup(__ez=_EZ.ez):
 
     del Modules
 
+    from ez.events import Plugins
 
-def _run(host: str = "127.0.0.1", port: int = 8000, __ez=_EZ.ez, uvicorn=uvicorn, setup=_setup):
+    emit(Plugins.WillLoad)
+    load_plugins()
+    emit(Plugins.DidLoad)
+
+    del Plugins
+
+
+def _run(setup=_setup):
     setup()
 
-    uvicorn.main.main(["--host", host, "--port", port, *unparsed_args])
 
-
-def run(host: str = None, port: int = None, _run=_run):
+def run(_run=_run):
     """
     Run the EZ Web Server.
     """
-    if host is None:
-        host = args.host
-    if port is None:
-        port = args.port
-    return _run(host, port)
+    return _run()
 
 
 _app = _EZ.ez.app
@@ -350,7 +376,6 @@ del PluginManager
 del ModuleManager
 
 del FastAPI
-del uvicorn
 
 del _run
 del _setup
