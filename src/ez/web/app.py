@@ -20,7 +20,13 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     ):
         import ez
 
+        # TODO: Refactor to different middlewares
+
         if request.url.path in docs_urls:
+            return await call_next(request)
+        
+        # TODO: soften hardcoded path
+        if request.url.path.startswith("/socket.io"):
             return await call_next(request)
 
         if request.url.path == STATIC_PATH or request.url.path.startswith(

@@ -1,4 +1,5 @@
-from ez.events import Event
+from .event import Event
+
 
 class TreeRenderer(Event):
     WillRender = "TreeRenderer.WillRender"

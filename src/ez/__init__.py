@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=".env.staging")
+load_dotenv(dotenv_path=".env")
 del load_dotenv
 
 
@@ -11,8 +11,10 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from typing import Callable
 
-from ez.web.response import _EzResponse
-from ez.plugins.manager import PluginManager
+from .web.response import _EzResponse
+from .plugins.manager import PluginManager
+
+from .modules.manager import ModuleManager
 
 from .web.app import EZApplication
 from .events import Event
@@ -33,6 +35,7 @@ request: "Request | None" = None
 SITE_DIR: Path = args.sitedir.resolve()
 EZ_FRAMEWORK_DIR: Path = Path(__file__).parents[2]
 PLUGINS_DIR: Path = SITE_DIR / "plugins"
+MODULE_DIR: Path = EZ_FRAMEWORK_DIR / "modules"
 
 
 log.info("Starting site:", SITE_DIR)
@@ -47,8 +50,11 @@ class _EZ:
     ez: "_EZ | None" = None
     ee: EventEmitter
     app: FastAPI
+
     plugin_events: dict[str, list[tuple[str, Callable]]]
     plugin_manager: PluginManager
+
+    mm: ModuleManager
 
     def __init__(self, app: FastAPI | None = None, ee: EventEmitter | None = None) -> None:
         if self.ez is not None:
@@ -57,8 +63,11 @@ class _EZ:
 
         self.ee = ee or EventEmitter()
         self.app = app or EZApplication(redirect_slashes=True)
+
         self.plugin_events = {}
         self.plugin_manager = PluginManager(PLUGINS_DIR)
+
+        self.mm = ModuleManager(MODULE_DIR)
 
     def add_plugin_event(self, plugin: str, event: str, handler: Callable):
         if plugin not in self.plugin_events:
@@ -129,6 +138,28 @@ def emit(event: Event, *args, __ez=_EZ.ez, **kwargs):
     :param event: The event to emit.
     """
     return __ez.ez.ee.emit(event, *args, **kwargs)
+
+
+#endregion
+
+
+#region Plugin System
+
+
+# TODO: Implement
+
+
+#endregion
+
+
+#region Module System
+
+
+# TODO: Implement
+
+
+def get_modules(__ez=_EZ.ez):
+    return __ez.mm.get_modules()
 
 
 #endregion
@@ -270,9 +301,24 @@ def all(route: str):
 #endregion
 
 
-def _run(host: str = "127.0.0.1", port: int = 8000, __ez=_EZ.ez, uvicorn=uvicorn):
+def _setup(__ez=_EZ.ez):
     if hasattr(__ez.app, "setup"):
         __ez.app.setup()
+
+    from .modules.events import Modules
+
+    emit(Modules.WillLoad)
+    if not __ez.mm.load_modules(reload=False):
+        log.info("No modules were loaded.")
+    else:
+        log.info(f"Loaded {len(get_modules())} modules from '{MODULE_DIR}'")
+    emit(Modules.DidLoad)
+
+    del Modules
+
+
+def _run(host: str = "127.0.0.1", port: int = 8000, __ez=_EZ.ez, uvicorn=uvicorn, setup=_setup):
+    setup()
 
     uvicorn.main.main(["--host", host, "--port", port, *unparsed_args])
 
@@ -301,9 +347,13 @@ del _EZ
 del EZApplication
 del PluginManager
 
+del ModuleManager
+
 del FastAPI
 del uvicorn
+
 del _run
+del _setup
 
 del _EzResponse
 del wraps
@@ -321,6 +371,3 @@ __all__ = [
 
 
 #endregion
-
-
-import include.plugins_loader as _
