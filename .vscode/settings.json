@@ -1,19 +1,6 @@
 {
-    "files.exclude": {
-        "**/__pycache__": true
-    },
-    "sqltools.connections": [
-        {
-            "mysqlOptions": {
-                "authProtocol": "default",
-                "enableSsl": "Disabled",
-                "ssl": {}
-            },
-            "previewLimit": 50,
-            "server": "localhost",
-            "driver": "MySQL",
-            "name": "EzWeb",
-            "connectString": "mysql://sql11681120:YJbF1vAPPz@sql11.freemysqlhosting.net/sql11681120"
-        }
+    "python.analysis.extraPaths": [
+        "./core",
+        "./modules"
     ]
 }
