@@ -165,3 +165,4 @@ node_modules/
 
 bin/
 lib/
+core/jsx*/
