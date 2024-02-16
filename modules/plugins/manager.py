@@ -2,9 +2,11 @@ import sys
 from utilities.semver import SemanticVersion
 
 from .plugin_info import PluginInfo
+from .model import PluginWebModel
 from .plugin import Plugin
 from .errors import UnknownPluginError
 
+from types import ModuleType
 from pathlib import Path
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib import reload
@@ -17,6 +19,22 @@ class PluginManager:
         self.plugin_dir = plugin_dir
         self._plugins: dict[str, Plugin] = {}
 
+        sys.modules[self.PLUGIN_PREFIX] = type("", (ModuleType,), {
+            "__path__": [str(plugin_dir)]
+        })(self.PLUGIN_PREFIX)
+
+    def get_plugins(self):
+        return [
+            PluginWebModel.model_validate({
+                "name": plugin.name,
+                "id": plugin.info.dir_name,
+                "enabled": plugin.enabled,
+                "version": str(plugin.version),
+                "description": plugin.info.description
+            })
+            for plugin in self._plugins.values()
+        ]
+
     def enable_plugin(self, plugin_name: str):
         try:
             plugin = self._plugins[plugin_name]
@@ -27,7 +45,7 @@ class PluginManager:
                 return
             plugin.enable()
             if plugin.is_loaded:
-                reload(plugin.module)
+                plugin.module.__spec__.loader.exec_module(plugin.module)
             else:
                 self.load_plugin(plugin)
 
@@ -42,7 +60,13 @@ class PluginManager:
             plugin.disable()
 
     def get_plugin_info(self, plugin_name: str) -> PluginInfo:
-        return self._plugins[plugin_name].info
+        return self.get_plugin(plugin_name).info
+    
+    def get_plugin(self, plugin_name):
+        try:
+            return self._plugins[plugin_name]
+        except KeyError:
+            raise UnknownPluginError(plugin_name)
     
     def add_plugin(self, plugin: PluginInfo) -> None:
         self._plugins[plugin.dir_name] = Plugin(plugin, None)
@@ -51,21 +75,26 @@ class PluginManager:
         if isinstance(plugin, str):
             try:
                 plugin = self.get_plugin_info(plugin)
-            except KeyError:
+            except UnknownPluginError:
                 dir_name = plugin
             else:
                 dir_name = plugin.dir_name
         if dir_name in self._plugins and self._plugins[dir_name].is_loaded:
+            self.enable_plugin(dir_name)
             return True
         
         spec = spec_from_file_location(self.get_plugin_full_name(dir_name), str(self.plugin_dir / dir_name / "plugin.py"))
         module = module_from_spec(spec)
 
+        if not hasattr(module, "__path__"):
+            module.__path__ = []
+        module.__package__ = spec.name
+        module.__path__.append(str(self.plugin_dir / dir_name))
         sys.modules[module.__name__] = module
 
         if isinstance(plugin, str):
             plugin = PluginInfo(plugin, SemanticVersion(0, 0, 0), "", dir_name)
-            self._plugins[dir_name] = Plugin(plugin, None)
+            _plugin = self._plugins[dir_name] = Plugin(plugin, None)
         
         try:
             spec.loader.exec_module(module)
@@ -82,6 +111,7 @@ class PluginManager:
         if _plugin is None:
             _plugin = Plugin(plugin, None)
         _plugin.module = module
+        _plugin.enable()
         self._plugins[dir_name] = _plugin
 
         return True
