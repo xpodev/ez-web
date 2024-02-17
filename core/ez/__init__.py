@@ -116,7 +116,6 @@ def event_function(f: Callable, *, __wraps=wraps, __ez=_EZ.ez, UnkownPluginError
         def wrapper(*args, **kwargs):
             if plugin.enabled:
                 return f(*args, **kwargs)
-            print(f"Plugin '{plugin.info.dir_name}' is disabled.")
             return
         f.__ez_plugin__ = wrapper.__ez_plugin__ = plugin.info
         return wrapper
