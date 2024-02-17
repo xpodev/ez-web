@@ -1,10 +1,3 @@
-import sys
-import os
-
-for path in os.environ["EZ_PYTHONPATH"].split(os.pathsep):
-    sys.path.append(path)
-
-
 def app():
     import ez
 
