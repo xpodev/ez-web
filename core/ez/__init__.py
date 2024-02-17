@@ -44,6 +44,8 @@ from utilities.event_emitter import EventEmitter
 from web.response import _EzResponse
 from plugins.manager import PluginManager
 from plugins.installer import PluginInstaller
+from plugins.errors import UnknownPluginError
+from plugins.plugin_info import PluginInfo
 
 from web.app.app import EZApplication
 
@@ -101,13 +103,41 @@ class _EZ:
 _EZ()
 
 
+def event_function(f: Callable, *, __wraps=wraps, __ez=_EZ.ez, UnkownPluginError=UnknownPluginError):
+    plugin = __ez.get_plugin_from_handler(f)
+    if not plugin:
+        return f
+    try:
+        plugin = __ez.plugin_manager.get_plugin(plugin)
+    except UnknownPluginError:
+        return f
+    else:
+        @__wraps(f)
+        def wrapper(*args, **kwargs):
+            if plugin.enabled:
+                return f(*args, **kwargs)
+            return
+        f.__ez_plugin__ = wrapper.__ez_plugin__ = plugin.info
+        return wrapper
+    
+
+def is_plugin_event_handler(f):
+    return callable(f) and getattr(f, "__ez_plugin__", None) is not None
+
+
+def get_plugin_event_handler_info(f) -> PluginInfo:
+    if not is_plugin_event_handler(f):
+        raise ValueError(f"Function '{f.__qualname__}' is not a plugin event handler.")
+    return getattr(f, "__ez_plugin__")
+
+
 #endregion
 
 
 #region Event System
 
 
-def on(event: Event, priority_or_f: int = 0, priority: int = 0, __ez=_EZ.ez):
+def on(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.ez):
     """
     Adds a listener to an event.
 
@@ -115,17 +145,17 @@ def on(event: Event, priority_or_f: int = 0, priority: int = 0, __ez=_EZ.ez):
     :param priority: The priority of the listener.
     """
     def _on(f):
-        plugin = __ez.get_plugin_from_handler(f)
-        if plugin:
-            __ez.add_plugin_event(__ez.get_plugin_from_handler(f), event, f)
-        return __ez.ee.on(event, f, priority_or_f)
+        f = event_function(f)
+        if is_plugin_event_handler(f):
+            __ez.add_plugin_event(get_plugin_event_handler_info(f).name, event, f)
+        return __ez.ee.on(event, f, priority)
     
-    if isinstance(priority_or_f, int):
-        return _on
-    return _on(event, priority_or_f, priority)
+    if maybe_f is not None:
+        return _on(maybe_f)
+    return _on
 
 
-def once(event: Event, priority_or_f: int = 0, priority: int = 0, __ez=_EZ.ez):
+def once(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.ez):
     """
     Adds a listener to an event that will only be called once.
 
@@ -133,14 +163,14 @@ def once(event: Event, priority_or_f: int = 0, priority: int = 0, __ez=_EZ.ez):
     :param priority: The priority of the listener.
     """
     def _once(f):
-        plugin = __ez.get_plugin_from_handler(f)
-        if plugin:
-            __ez.add_plugin_event(__ez.get_plugin_from_handler(f), event, f)
-        return __ez.ee.once(event, f, priority_or_f)
-
-    if isinstance(priority_or_f, int):
-        return _once
-    return __ez.ee.once(event, priority_or_f, priority)
+        f = event_function(f)
+        if is_plugin_event_handler(f):
+            __ez.add_plugin_event(get_plugin_event_handler_info(f).name, event, f)
+        return __ez.ee.once(event, f, priority)
+    
+    if maybe_f is not None:
+        return _once(maybe_f)
+    return _once
 
 
 def emit(event: Event, *args, __ez=_EZ.ez, **kwargs):
@@ -156,6 +186,14 @@ def emit(event: Event, *args, __ez=_EZ.ez, **kwargs):
 
 
 #region Plugin System
+
+
+def get_plugins(__ez=_EZ.ez):
+    return __ez.plugin_manager.get_plugins()
+
+
+def load_plugin(plugin: str, __ez=_EZ.ez):
+    return __ez.plugin_manager.load_plugin(plugin)
 
 
 def load_plugins(__ez=_EZ.ez):
@@ -221,7 +259,8 @@ def add_route(route: str, methods: list[str], __ez=_EZ.ez, __wraps=wraps, __isco
     """
 
     def decorator(handler):
-
+        handler = event_function(handler)
+        
         if __iscoroutinefunction(handler):
 
             @__wraps(handler)
@@ -392,8 +431,9 @@ del _EZ
 
 del EZApplication
 del PluginManager
-
 del ModuleManager
+
+del UnknownPluginError
 
 del FastAPI
 
