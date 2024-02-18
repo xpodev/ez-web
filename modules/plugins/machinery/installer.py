@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeAlias
+from typing import TypeAlias, ClassVar
 
 from utilities.version import Version
 
@@ -29,7 +29,7 @@ class PluginInstallationResult:
 
 
 class IPluginInstaller:
-    info: PluginInstallerInfo
+    info: ClassVar[PluginInstallerInfo]
 
     def __init__(self, plugin_dir: str) -> None:
         self._plugin_dir = Path(plugin_dir)
