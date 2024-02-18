@@ -27,3 +27,6 @@ class IPluginLoader:
 
     def load(self, plugin_id: PluginId, plugin: Plugin | None) -> Plugin | None:
         raise NotImplementedError
+    
+    def run_main(self, plugin: Plugin) -> None:
+        return None

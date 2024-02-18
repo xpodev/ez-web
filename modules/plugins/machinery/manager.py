@@ -179,9 +179,20 @@ class PluginManager:
         
         return plugin
 
-    def load_plugins(self, *plugin_ids: PluginId):
+    def load_plugins(self, *plugin_ids: PluginId, run_main: bool = True):
         for plugin_id in plugin_ids:
             self.load_plugin(plugin_id)
+
+        if run_main:
+            self.run_plugins(*plugin_ids)
+
+    def run_plugins(self, *plugin_ids: PluginId):
+        if not plugin_ids:
+            plugin_ids = self._plugins.keys()
+        for plugin_id in plugin_ids:
+            plugin = self.get_plugin(plugin_id)
+            loader = self.get_loader(plugin.loader.id)
+            loader.run_main(plugin)
 
     #endregion
 

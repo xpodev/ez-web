@@ -5,6 +5,7 @@ from importlib.util import spec_from_file_location, module_from_spec
 
 from utilities.version import Version
 
+from ..plugin import Plugin
 from ..plugin_info import PluginId, PluginInfo
 from ..machinery.loader import IPluginLoader, PluginLoaderInfo
 
@@ -22,6 +23,7 @@ class EZPluginLoader(IPluginLoader):
     EZ_PLUGIN_ENTRY_POINT_FILENAME = "plugin.py"
     EZ_PLUGIN_API_ATTRIBUTE_NAME = "__api__"
     EZ_PLUGIN_INFO_ATTRIBUTE_NAME = "__info__"
+    EZ_PLUGIN_MAIN_FUNCTION_NAME = "main"
     EZ_PLUGIN_PREFIX = "ez.current-site.plugins"
 
     def __init__(self, plugin_dir: PluginId) -> None:
@@ -32,12 +34,10 @@ class EZPluginLoader(IPluginLoader):
         root = sys.modules[self.EZ_PLUGIN_PREFIX] = PluginModule(self.EZ_PLUGIN_PREFIX)
         root.__path__ = [str(self.plugin_dir)]
 
-    def load(self, plugin_id: PluginId, plugin: EZPlugin) -> EZPlugin | None:
+    def load(self, plugin_id: PluginId, plugin: Plugin) -> EZPlugin | None:
         if plugin is None:
             return self._load_plugin(plugin_id)
-        if not isinstance(plugin, EZPlugin):
-            # TODO: Add a custom exception for this, deriving from PluginLoaderException
-            raise TypeError(f"Expected EZPlugin, got {type(plugin)}")
+        plugin = self._assert_ez_plugin(plugin)
         if plugin.is_loaded:
             if plugin.enabled:
                 return None
@@ -82,6 +82,13 @@ class EZPluginLoader(IPluginLoader):
         ez_plugin.api = getattr(module, self.get_api_attribute_name(), None)
 
         return ez_plugin
+    
+    def run_main(self, plugin: Plugin) -> None:
+        plugin = self._assert_ez_plugin(plugin)
+        if plugin.enabled:
+            main = getattr(plugin.module, self.EZ_PLUGIN_MAIN_FUNCTION_NAME, None)
+            if callable(main):
+                main()
 
     def _load_module(self, plugin_id: PluginId) -> PluginModule:
         path = self._get_plugin_path(plugin_id)
@@ -97,6 +104,11 @@ class EZPluginLoader(IPluginLoader):
 
     def _get_plugin_path(self, plugin_id: PluginId):
         return self.plugin_dir / str(plugin_id) / self.get_entry_point_filename()
+    
+    def _assert_ez_plugin(self, plugin: Plugin) -> EZPlugin:
+        if not isinstance(plugin, EZPlugin):
+            raise TypeError(f"Expected EZPlugin, got {type(plugin)}")
+        return plugin
     
     @classmethod
     def get_entry_point_filename(cls) -> str:
