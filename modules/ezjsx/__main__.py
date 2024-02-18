@@ -4,7 +4,8 @@ from jsx.server import mount
 from jsx.renderer import render
 from jsx.components import Component
 from jsx.html import Element
-from ez.events import HTTP, TreeRenderer
+from ez.events import HTTP
+from .events import TreeRenderer
 
 
 @ez.on(HTTP.Out)
