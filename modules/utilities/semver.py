@@ -1,16 +1,12 @@
-class SemanticVersion:
+from pydantic import BaseModel
+
+
+class SemanticVersion(BaseModel):
     major: int
     minor: int
     patch: int
-    pre_release: str
-    build: str
-
-    def __init__(self, major: int, minor: int, patch: int, pre_release: str = "", build: str = ""):
-        self.major = major
-        self.minor = minor
-        self.patch = patch
-        self.pre_release = pre_release
-        self.build = build
+    pre_release: str = ""
+    build: str = ""
 
     @classmethod
     def parse(cls, version: str):
@@ -24,7 +20,13 @@ class SemanticVersion:
         if "+" in pre_release:
             pre_release, build = pre_release.split("+")
 
-        return cls(int(major), int(minor), int(patch), pre_release, build)
+        return cls.model_construct(
+            major=int(major), 
+            minor=int(minor), 
+            patch=int(patch), 
+            pre_release=pre_release, 
+            build=build
+        )
     
     def __str__(self):
         return f"{self.major}.{self.minor}.{self.patch}{f'-{self.pre_release}' if self.pre_release else ''}{f'+{self.build}' if self.build else ''}"

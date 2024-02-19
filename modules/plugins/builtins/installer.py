@@ -15,9 +15,9 @@ class InvalidPluginManifest(EZPluginInstallerError):
 
 
 class EZPluginInstaller(IPluginInstaller):
-    info = PluginInstallerInfo(
-        "ez.plugins.installer",
-        "EZ Plugin Installer",
+    info = PluginInstallerInfo.model_construct(
+        id="ez.plugins.installer",
+        name="EZ Plugin Installer",
     )
 
     def install(self, path: str) -> PluginInstallationResult:

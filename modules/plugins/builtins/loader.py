@@ -15,9 +15,9 @@ from .plugin_module import PluginModule
 
 
 class EZPluginLoader(IPluginLoader):
-    info = PluginLoaderInfo(
-        "ez.plugins.loader",
-        "EZ Plugin Loader",
+    info = PluginLoaderInfo.model_construct(
+        id="ez.plugins.loader",
+        name="EZ Plugin Loader",
     )
 
     EZ_PLUGIN_ENTRY_POINT_FILENAME = "plugin.py"
@@ -59,7 +59,7 @@ class EZPluginLoader(IPluginLoader):
             metadata["version"] = Version.parse(metadata["version"])
             if "description" not in metadata:
                 metadata["description"] = module.__doc__
-            info = PluginInfo(
+            info = PluginInfo.model_construct(
                 **metadata
             )
 

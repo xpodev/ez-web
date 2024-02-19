@@ -1,23 +1,26 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 from pathlib import Path
-from typing import TypeAlias, ClassVar
+from typing import TypeAlias, ClassVar, TYPE_CHECKING
 
 from utilities.version import Version
 
-from ..plugin_info import PluginId
+if TYPE_CHECKING:
+    from ..plugin_info import PluginId
 
 
 PluginInstallerId: TypeAlias = str
 
 
-@dataclass
-class PluginInstallerInfo:
+@dataclass()
+class PluginInstallerInfo(BaseModel):
     id: PluginInstallerId
     name: str
 
 
+# This is not yet pydantic_dataclass because the `Version` type is not compatible with pydantic
 @dataclass
-class PluginInstallationResult:
+class PluginInstallationResult(BaseModel):
     installer_id: PluginInstallerId
     package_name: str
     version: Version
@@ -41,5 +44,5 @@ class IPluginInstaller:
     def install(self, path: str) -> PluginInstallationResult:
         raise NotImplementedError
 
-    def uninstall(self, plugin_id: str) -> None:
+    def uninstall(self, plugin_id: "PluginId") -> None:
         raise NotImplementedError
