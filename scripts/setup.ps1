@@ -76,8 +76,8 @@ function Load {
         Write-Host `b"OK" -ForegroundColor $GREEN
     } else {
       Write-Host -NoNewLine `b"Failed" -ForegroundColor $RED
-      $error = Receive-Job $job
-      Write-Host $error
+      $jobError = Receive-Job $job
+      Write-Host $jobError
       return 1
     }
 }
