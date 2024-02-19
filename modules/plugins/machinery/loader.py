@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 from pathlib import Path
 from typing import TypeAlias, ClassVar
 
@@ -10,7 +11,7 @@ PluginLoaderId: TypeAlias = str
 
 
 @dataclass
-class PluginLoaderInfo:
+class PluginLoaderInfo(BaseModel):
     id: PluginLoaderId
     name: str
 
