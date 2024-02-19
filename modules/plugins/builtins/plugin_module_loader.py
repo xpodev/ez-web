@@ -1,0 +1,16 @@
+from importlib.abc import Loader
+
+from .plugin_module import PluginModule
+
+
+class PluginModuleLoader(Loader):
+    def create_module(self, spec):
+        module = PluginModule(spec.name, None)
+        module.__spec__ = spec
+        return module
+
+    def exec_module(self, module):
+        with open(module.__spec__.origin, "r") as file:
+            code = file.read()
+
+            exec(code, vars(module))

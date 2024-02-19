@@ -1,3 +1,4 @@
+from types import ModuleType
 from utilities.semver import SemanticVersion
 from .module import Module
 
@@ -15,10 +16,16 @@ from . import __version__
 class ModuleManager:
     PACKAGE_ENTRY_POINT = "__main__.py"
     MODULE_PREFIX = "ez.global.modules"
+    MODULE_NAME_ATTRIBUTE = "__module_name__"
 
     def __init__(self, module_dir: Path) -> None:
         self.module_dir = module_dir
         self._modules: list[Module] = []
+
+        sys.modules[self.MODULE_PREFIX] = type("", (ModuleType,), {
+            "__path__": [str(module_dir)],
+            "__package__": str(self.MODULE_PREFIX)
+        })(self.MODULE_PREFIX)
 
     def load_modules(self, *, reload: bool = True) -> bool:
         """
@@ -42,6 +49,7 @@ class ModuleManager:
             return False
         if not self.module_dir.is_dir():
             return False
+        
         for item in self.module_dir.iterdir():
             name = item.stem
             if item.is_dir():
@@ -53,30 +61,44 @@ class ModuleManager:
             if item.suffix != ".py":
                 continue
             self._load_module_from(name, item)
+
+        for module in self._modules:
+            module.entry_point.__spec__.loader.exec_module(module.entry_point)
+        
         if self._modules:
             self._modules.append(Module(
                 "Module Manager",
                 THIS,
                 Path(THIS.__file__),
-                SemanticVersion.parse(THIS.__version__),
-                "Module Manager by EZ Framework."
             ))
-            return True
-        return False
+
+        return bool(self._modules)
 
     def _load_module_from(self, name: str, path: Path):
-        spec = spec_from_file_location(self.get_module_full_name(name), str(path))
+        full_name = self.get_module_full_name(name)
+        package_dir = path.parent
+
+        init_file = package_dir / "__init__.py"
+        if init_file.exists():
+            spec = spec_from_file_location(
+                full_name, 
+                init_file, 
+                submodule_search_locations=[
+                    str(package_dir)
+                ])
+            module = sys.modules[spec.name] = module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            name = getattr(module, self.MODULE_NAME_ATTRIBUTE, name)
+
+        spec = spec_from_file_location(
+            full_name + '.__main__', 
+            str(path)
+        )
         entry_point = module_from_spec(spec)
-        spec.loader.exec_module(entry_point)
+        sys.modules[spec.name] = entry_point
 
-        if not hasattr(entry_point, "__version__"):
-            raise Exception(f"Invalid module '{name}' at '{path}'")
-        
-        name = getattr(entry_point, "__title__", name)
-        version = SemanticVersion.parse(entry_point.__version__)
-        description = getattr(entry_point, "__description__", getattr(entry_point, "__doc__", ""))
-
-        module = Module(name, entry_point, path, version, description)
+        module = Module(name, entry_point, path)
         self._modules.append(module)
 
     def reload_module(self, module: Module):

@@ -1,0 +1,7 @@
+import ez
+
+
+PLUGINS_DIRECTORY_NAME = "plugins"
+PLUGINS_DIRECTORY = ez.SITE_DIR / PLUGINS_DIRECTORY_NAME
+
+METADATA_FILENAME = "plugin-metadata"
