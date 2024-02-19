@@ -3,7 +3,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from ..response import _EzResponse
-from ez.events import HTTP, App
+from .events import App
+from ..events import HTTP
 
 
 docs_urls = [

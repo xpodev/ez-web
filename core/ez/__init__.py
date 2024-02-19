@@ -42,21 +42,20 @@ from modules.manager import ModuleManager
 from utilities.event import Event
 from utilities.event_emitter import EventEmitter
 from web.response import _EzResponse
-from plugins.manager import PluginManager
-from plugins.installer import PluginInstaller
-from plugins.errors import UnknownPluginError
-from plugins.plugin_info import PluginInfo
-
 from web.app.app import EZApplication
 
-sys.path.remove(str(MODULE_DIR))
-del sys
+from ez.errors import EZError
 
+sys.path.remove(str(MODULE_DIR))
 
 #endregion
 
 
 #region EZ Internal
+
+
+__path__ = list(__path__)
+
 
 class _EZ:
     ez: "_EZ | None" = None
@@ -64,8 +63,6 @@ class _EZ:
     app: FastAPI
 
     plugin_events: dict[str, list[tuple[str, Callable]]]
-    plugin_manager: PluginManager
-    plugin_installer: PluginInstaller
 
     mm: ModuleManager
 
@@ -78,8 +75,6 @@ class _EZ:
         self.app = app or EZApplication(redirect_slashes=True)
 
         self.plugin_events = {}
-        self.plugin_manager = PluginManager(PLUGINS_DIR)
-        self.plugin_installer = PluginInstaller(self.plugin_manager)
 
         self.mm = ModuleManager(MODULE_DIR)
 
@@ -95,20 +90,24 @@ class _EZ:
             del self.plugin_events[plugin]
 
     def get_plugin_from_handler(self, handler: Callable, __Path=Path) -> str:
-        if not handler.__module__.startswith(self.plugin_manager.PLUGIN_PREFIX):
+        PLUGIN_PREFIX = "ez.current-site.plugins"
+        if not handler.__module__.startswith(PLUGIN_PREFIX):
             return None
-        name = handler.__module__.removeprefix(self.plugin_manager.PLUGIN_PREFIX + ".").split(".")[0]
-        return self.plugin_manager.get_plugin_info(name).dir_name
+        name = handler.__module__.removeprefix(PLUGIN_PREFIX + ".").split(".")[0]
+        return name
 
 _EZ()
 
 
-def event_function(f: Callable, *, __wraps=wraps, __ez=_EZ.ez, UnkownPluginError=UnknownPluginError):
+def event_function(f: Callable, *, __wraps=wraps, __ez=_EZ.ez):
+    import ez.plugins
+    from ez.plugins import UnknownPluginError
+
     plugin = __ez.get_plugin_from_handler(f)
     if not plugin:
         return f
     try:
-        plugin = __ez.plugin_manager.get_plugin(plugin)
+        plugin = ez.plugins.get_plugin(plugin)
     except UnknownPluginError:
         return f
     else:
@@ -117,7 +116,7 @@ def event_function(f: Callable, *, __wraps=wraps, __ez=_EZ.ez, UnkownPluginError
             if plugin.enabled:
                 return f(*args, **kwargs)
             return
-        f.__ez_plugin__ = wrapper.__ez_plugin__ = plugin.info
+        f.__ez_plugin__ = wrapper.__ez_plugin__ = plugin
         return wrapper
     
 
@@ -125,10 +124,21 @@ def is_plugin_event_handler(f):
     return callable(f) and getattr(f, "__ez_plugin__", None) is not None
 
 
-def get_plugin_event_handler_info(f) -> PluginInfo:
+def get_plugin_event_handler_info(f):
     if not is_plugin_event_handler(f):
         raise ValueError(f"Function '{f.__qualname__}' is not a plugin event handler.")
     return getattr(f, "__ez_plugin__")
+
+
+def extend_ez(module, alias: str = None, *, THIS=sys.modules[__name__]):
+    import sys
+    from pathlib import Path
+    
+    path = Path(module.__file__)
+
+    name = alias or path.stem
+    setattr(THIS, alias or path.stem, module)
+    sys.modules[f"ez.{name}"] = module
 
 
 #endregion
@@ -180,54 +190,6 @@ def emit(event: Event, *args, __ez=_EZ.ez, **kwargs):
     :param event: The event to emit.
     """
     return __ez.ez.ee.emit(event, *args, **kwargs)
-
-
-#endregion
-
-
-#region Plugin System
-
-
-def get_plugins(__ez=_EZ.ez):
-    return __ez.plugin_manager.get_plugins()
-
-
-def load_plugin(plugin: str, __ez=_EZ.ez):
-    return __ez.plugin_manager.load_plugin(plugin)
-
-
-def load_plugins(__ez=_EZ.ez):
-    from ez.database.models.plugin import PluginModel
-
-    names = [plugin.dir_name for plugin in PluginModel.filter_by(enabled=True).all()]
-
-    return __ez.plugin_manager.load_plugins(names)
-
-
-def enable_plugin(plugin: str, __ez=_EZ.ez):
-    return __ez.plugin_manager.enable_plugin(plugin)
-
-
-def disable_plugin(plugin: str, __ez=_EZ.ez):
-    plugin_info = __ez.plugin_manager.get_plugin_info(plugin)
-    __ez.remove_plugin_events(plugin_info.dir_name)
-    return __ez.plugin_manager.disable_plugin(plugin)
-
-
-def install_plugin(path: str | Path, __Path=Path, __ez=_EZ.ez):
-    if isinstance(path, str):
-        path = __Path(path)
-    
-    if path.suffix == ".zip":
-        return __ez.plugin_installer.install_from_zip(path)
-    elif path.is_dir():
-        return __ez.plugin_installer.install_from_path(path)
-    else:
-        raise ValueError("Invalid path to plugin: must be a directory or a zip file.")
-    
-
-def uninstall_plugin(plugin: str, __ez=_EZ.ez):
-    return __ez.plugin_installer.uninstall_plugin(plugin)
 
 
 #endregion
@@ -399,13 +361,17 @@ def _setup(__ez=_EZ.ez):
 
     del Modules
 
-    from ez.events import Plugins
+    from ez.plugins import PluginEvent, __pm
 
-    emit(Plugins.WillLoad)
-    load_plugins()
-    emit(Plugins.DidLoad)
+    emit(PluginEvent.WillLoad)
+    # TODO: WTF????
+    __pm.load_plugins(
+        "test-plugin",
+        "title-changer"
+    )
+    emit(PluginEvent.DidLoad)
 
-    del Plugins
+    del PluginEvent
 
 
 def _run(setup=_setup):
@@ -430,10 +396,10 @@ del Event
 del _EZ
 
 del EZApplication
-del PluginManager
+# del PluginManager
 del ModuleManager
 
-del UnknownPluginError
+# del UnknownPluginError
 
 del FastAPI
 
@@ -447,7 +413,10 @@ del Callable
 
 del Path
 
+del sys
+
 __all__ = [
+    "EZError",
     "on",
     "once",
     "emit",

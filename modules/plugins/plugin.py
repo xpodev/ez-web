@@ -1,11 +1,20 @@
+from dataclasses import dataclass
 from types import ModuleType
-from .plugin_info import PluginInfo
+from typing import TypeAlias, TYPE_CHECKING
+from .plugin_info import PluginInfo, PluginId, PackageName
+
+
+if TYPE_CHECKING:
+    from .machinery.loader import PluginLoaderInfo
 
 
 API_ATTRIBUTE_NAME = "__api__"
 
 
-class Plugin:
+PluginAPI: TypeAlias = object
+
+
+class EZPlugin:
     info: PluginInfo
     module: ModuleType | None
     enabled: bool
@@ -40,3 +49,11 @@ class Plugin:
 
     def disable(self):
         self.enabled = False
+
+
+@dataclass
+class Plugin:
+    info: PluginInfo
+    loader: "PluginLoaderInfo"
+    enabled: bool
+    api: PluginAPI | None
