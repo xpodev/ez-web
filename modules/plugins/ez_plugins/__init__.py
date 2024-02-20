@@ -40,7 +40,7 @@ def disable(plugin_id: PluginId) -> bool:
 
 
 def is_enabled(plugin_id: PluginId) -> bool:
-    plugin = __pm.get_plugin(plugin)
+    plugin = __pm.get_plugin(plugin_id)
     return plugin.enabled
 
 
