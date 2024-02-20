@@ -36,6 +36,8 @@ class EZPluginInstaller(IPluginInstaller):
         name="EZ Plugin Installer",
     )
 
+    EZ_PLUGIN_MANIFEST_FILENAME = "manifest.yaml"
+
     def install(self, path: str) -> PluginInstallationResult:
         path: Path = Path(path)
 
@@ -51,7 +53,7 @@ class EZPluginInstaller(IPluginInstaller):
             raise InvalidPluginArchive(path) from e
         
         with zip_file:
-            manifest_file = zip_file.open("manifest.yaml")
+            manifest_file = zip_file.open(self.EZ_PLUGIN_MANIFEST_FILENAME)
             manifest_data = yaml.safe_load(manifest_file)
             try:
                 manifest = PluginManifest.model_validate(manifest_data)
