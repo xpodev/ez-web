@@ -21,10 +21,11 @@ from ..errors import (
 from ..machinery.installer import IPluginInstaller
 from ..machinery.loader import IPluginLoader
 
+from ..config import PLUGINS_PUBLIC_API_MODULE_NAME
+
 
 class PluginManager:
     EZ_PLUGIN_PREFIX = "ez.current-site.plugins"
-    EZ_PUBLIC_API_MODULE = "ez_plugins"
 
     def __init__(
             self, 
@@ -41,7 +42,7 @@ class PluginManager:
         self._default_plugin_installer = self.add_installer(default_installer)
         self._default_plugin_loader = self.add_loader(default_loader)
 
-        self._public_api = public_api or ModuleType(self.EZ_PUBLIC_API_MODULE)
+        self._public_api = public_api or ModuleType(PLUGINS_PUBLIC_API_MODULE_NAME)
 
     #region Plugin Public API
 
@@ -50,7 +51,7 @@ class PluginManager:
         return self._public_api
     
     def enable_public_api(self, alias: str = None):
-        alias = alias or self.EZ_PUBLIC_API_MODULE
+        alias = alias or PLUGINS_PUBLIC_API_MODULE_NAME
 
         import sys
 
