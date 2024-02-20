@@ -1,4 +1,5 @@
 import yaml
+import shutil
 
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
@@ -6,6 +7,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from utilities.version import Version
 
+from ..config import PLUGINS_PUBLIC_API_DIR
 from ..errors import EZPluginError, PluginAlreadyInstalledError
 from ..plugin_info import PackageName
 from ..machinery.installer import IPluginInstaller, PluginInstallationResult, PluginInstallerInfo
@@ -71,4 +73,11 @@ class EZPluginInstaller(IPluginInstaller):
                 (plugin_dir / manifest.typing_file).rename()
 
     def uninstall(self, plugin_id: str) -> None:
-        ...
+        plugin_dir = self.plugin_dir / plugin_id
+        if not plugin_dir.exists():
+            raise FileNotFoundError(plugin_dir)
+        
+        shutil.rmtree(str(plugin_dir))
+
+        if (PLUGINS_PUBLIC_API_DIR / f"{plugin_id}.py").exists():
+            (PLUGINS_PUBLIC_API_DIR / f"{plugin_id}.py").unlink()
