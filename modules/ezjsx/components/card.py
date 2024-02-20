@@ -1,10 +1,18 @@
-from jsx.components import Component
+from jsx.components import ContainerComponent
 from jsx.html import Div
 
-class Card(Component):
+
+class Card(ContainerComponent):
     def __init__(self, *children, **props):
-        self.children = children
-        props["class_name"] = [props.get("class_name", ""), "card"]
+        super().__init__(*children)
+        
+        class_name = props.get("class_name", [])
+        if isinstance(class_name, list):
+            class_name.append("card")
+        else:
+            class_name = [class_name, "card"]
+
+        props["class_name"] = class_name
         self.props = props
 
     def render(self):
