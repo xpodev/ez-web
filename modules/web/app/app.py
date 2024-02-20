@@ -29,7 +29,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         result = await call_next(request)
 
         route = request.scope.get("endpoint")
-        if not route or not hasattr(route, ez.EZ_ROUTE_ATTRIBUTE) or not getattr(route, ez.EZ_ROUTE_ATTRIBUTE):
+        if not route or not getattr(route, ez.EZ_ROUTE_ATTRIBUTE, False):
             return result
         
 
