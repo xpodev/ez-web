@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from types import ModuleType
 from typing import TypeAlias, TYPE_CHECKING
-from .plugin_info import PluginInfo
+
+from .plugin_info import PluginInfo, PluginId
 
 
 if TYPE_CHECKING:

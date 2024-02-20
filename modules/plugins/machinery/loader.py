@@ -2,8 +2,7 @@ from pydantic import BaseModel
 from pathlib import Path
 from typing import TypeAlias, ClassVar
 
-from ..plugin import Plugin
-from ..plugin_info import PluginId
+from ..plugin import Plugin, PluginId
 
 
 PluginLoaderId: TypeAlias = str

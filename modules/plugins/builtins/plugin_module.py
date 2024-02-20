@@ -2,7 +2,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ez.plugins import Plugin, PluginInfo
+    from ..plugin import Plugin, PluginInfo
 
 
 class PluginModule(ModuleType):

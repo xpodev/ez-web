@@ -5,7 +5,7 @@ from typing import TypeAlias, ClassVar, TYPE_CHECKING
 from utilities.version import Version
 
 if TYPE_CHECKING:
-    from ..plugin_info import PluginId
+    from ..plugin import PluginId
 
 
 PluginInstallerId: TypeAlias = str

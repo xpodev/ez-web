@@ -1,7 +1,6 @@
 from typing import Callable
 
-from ..plugin import Plugin, PluginId, PluginAPI
-from ..plugin_info import PluginInfo
+from ..plugin import Plugin, PluginInfo, PluginId, PluginAPI
 from ..machinery.installer import IPluginInstaller, PluginInstallerInfo, PluginInstallerId
 from ..machinery.loader import IPluginLoader, PluginLoaderInfo
 
