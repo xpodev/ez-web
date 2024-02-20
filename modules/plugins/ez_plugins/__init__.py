@@ -8,7 +8,7 @@ from .errors import EZPluginError, UnknownPluginError, DuplicateIDError
 from .events import Plugins as PluginEvent
 
 from ..manager import PLUGIN_MANAGER as __pm
-from ..config import METADATA_FILENAME
+from ..config import METADATA_FILENAME, PLUGINS_PUBLIC_API_MODULE_NAME
 
 
 def get_plugins() -> list[Plugin]:
@@ -66,7 +66,7 @@ def get_metadata_filename() -> str:
 
 
 def get_plugin_public_api_module_name() -> str:
-    ...
+    return PLUGINS_PUBLIC_API_MODULE_NAME
 
 
 def expose(plugin: Plugin, api: PluginAPI):
