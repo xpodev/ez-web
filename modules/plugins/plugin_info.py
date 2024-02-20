@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 from typing import TypeAlias, TYPE_CHECKING
 from utilities.version import Version
@@ -18,8 +18,9 @@ class PluginInfo(BaseModel):
     name: str
     version: Version
     description: str | None
-    installer_id: PluginInstallerId
+    installer_id: PluginInstallerId = Field(exclude=True)
     package_name: str
+    author: str
 
     @property
     def id(self) -> PluginId:
