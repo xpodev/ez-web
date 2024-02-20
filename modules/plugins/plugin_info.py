@@ -3,9 +3,7 @@ from pydantic.dataclasses import dataclass
 from typing import TypeAlias, TYPE_CHECKING
 from utilities.version import Version
 
-
-# if TYPE_CHECKING:
-#     
+ 
 from .machinery.installer import PluginInstallerId
 
 
