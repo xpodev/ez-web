@@ -25,7 +25,7 @@ EZ_FRAMEWORK_DIR: Path = Path(__file__).parents[2]
 PLUGINS_DIR: Path = SITE_DIR / "plugins"
 MODULE_DIR: Path = EZ_FRAMEWORK_DIR / "modules"
 PLUGIN_API_DIR: Path = SITE_DIR / "lib" / "public-api" / "plugins"
-
+EZ_ROUTE_ATTRIBUTE = "ez_web_route"
 
 #endregion
 
@@ -230,6 +230,7 @@ def add_route(route: str, methods: list[str], __ez=_EZ.ez, __wraps=wraps, __isco
                 result = await handler(*args, **kwargs)
                 return response._auto_body(result)
 
+            setattr(wrapper, EZ_ROUTE_ATTRIBUTE, True)
             __ez.app.add_api_route(route, endpoint=wrapper, methods=methods)
         else:
 
@@ -238,6 +239,7 @@ def add_route(route: str, methods: list[str], __ez=_EZ.ez, __wraps=wraps, __isco
                 result = handler(*args, **kwargs)
                 return response._auto_body(result)
 
+            setattr(wrapper, EZ_ROUTE_ATTRIBUTE, True)
             __ez.app.add_api_route(route, endpoint=wrapper, methods=methods)
 
         log.debug(f"{methods} {route} -> {handler.__name__}")

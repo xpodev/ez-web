@@ -21,26 +21,17 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     ):
         import ez
 
-        if request.url.path in docs_urls:
-            return await call_next(request)
-        
-        if request.url.path.startswith("/socket.io"):
-            return await call_next(request)
-
-        if request.url.path == STATIC_PATH or request.url.path.startswith(
-            f"{STATIC_PATH}/"
-        ):
-            result = await call_next(request)
-            if result.status_code < 400:
-                return result
-
         ez.request = request
         ez.response = _EzResponse()
+
         ez.emit(HTTP.In, request)
 
         result = await call_next(request)
-        if 300 <= result.status_code < 400:
+
+        route = request.scope.get("endpoint")
+        if not route or not getattr(route, ez.EZ_ROUTE_ATTRIBUTE, False):
             return result
+        
 
         ez.emit(HTTP.Out, ez.response)
 
@@ -67,4 +58,4 @@ class EZApplication(FastAPI):
         """
         import ez
         
-        return ez.response.text(str(exc))
+        return str(exc)
