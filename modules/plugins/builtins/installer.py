@@ -31,7 +31,7 @@ class PluginManifest(BaseModel):
 
 
 class EZPluginInstaller(IPluginInstaller):
-    info = PluginInstallerInfo.model_construct(
+    info = PluginInstallerInfo(
         id="ez.plugins.installer",
         name="EZ Plugin Installer",
     )
