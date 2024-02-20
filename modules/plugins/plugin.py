@@ -20,3 +20,10 @@ class Plugin:
     loader: "PluginLoaderInfo"
     enabled: bool
     api: PluginAPI | None
+
+
+__all__ = [
+    "Plugin",
+    "PluginId",
+    "PluginInfo",
+]
