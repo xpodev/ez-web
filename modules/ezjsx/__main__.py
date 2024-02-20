@@ -24,9 +24,9 @@ mount(ez._app)
 
 ez.extend_ez(components, "jsx")
 
-__title__ = "EZ JSX Integration"
+__module_name__ = "EZ JSX Integration"
 __version__ = "1.0.0"
-__description__ = \
+__doc__ = \
 """
 This module enables the jsx library for use in EZ Web Framework.
 """
