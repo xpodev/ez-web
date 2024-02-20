@@ -14,11 +14,16 @@ def render_tree(_):
     if ez.request.method != "GET":
         return
 
-    if isinstance(ez.response.body, (Component, Element)):
-        ez.emit(TreeRenderer.WillRender, ez.response.body)
-        result = render(ez.response.body)
-        ez.emit(TreeRenderer.DidRender, ez.response.body, result)
+    body = ez.response.body
+    if isinstance(body, (Component, Element)):
+        if not isinstance(body, components.Page):
+            body = components.Page(body)
+
+        ez.emit(TreeRenderer.WillRender, body)
+        result = render(body)
+        ez.emit(TreeRenderer.DidRender, body, result)
         ez.response.html(result)
+
 
 mount(ez._app)
 
@@ -26,7 +31,6 @@ ez.extend_ez(components, "jsx")
 
 __title__ = "EZ JSX Integration"
 __version__ = "1.0.0"
-__description__ = \
-"""
+__description__ = """
 This module enables the jsx library for use in EZ Web Framework.
 """
