@@ -5,7 +5,7 @@ from types import ModuleType
 
 @dataclass
 class Module:
-    name: str
+    name: str | None
     entry_point: ModuleType
     entry_point_path: Path
 
