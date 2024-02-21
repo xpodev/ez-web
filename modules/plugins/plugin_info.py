@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
-from typing import TypeAlias, TYPE_CHECKING
+from typing import TypeAlias
 from utilities.version import Version
 
  

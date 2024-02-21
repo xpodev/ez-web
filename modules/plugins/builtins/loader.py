@@ -11,7 +11,7 @@ from ..machinery.loader import IPluginLoader, PluginLoaderInfo
 from .plugin import EZPlugin
 from .plugin_module_loader import PluginModuleLoader
 from .plugin_module import PluginModule
-from .dbi import PLUGIN_REPOSITORY, PluginInfoModel
+from .dbi import PLUGIN_REPOSITORY
 
 
 class EZPluginLoader(IPluginLoader):
