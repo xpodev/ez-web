@@ -1,4 +1,7 @@
+from http import HTTPStatus
+from typing import Callable
 from fastapi import FastAPI, Request, Response
+from fastapi.routing import BaseRoute
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
@@ -21,26 +24,17 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     ):
         import ez
 
-        if request.url.path in docs_urls:
-            return await call_next(request)
-        
-        if request.url.path.startswith("/socket.io"):
-            return await call_next(request)
-
-        if request.url.path == STATIC_PATH or request.url.path.startswith(
-            f"{STATIC_PATH}/"
-        ):
-            result = await call_next(request)
-            if result.status_code < 400:
-                return result
-
         ez.request = request
         ez.response = _EzResponse()
+
         ez.emit(HTTP.In, request)
 
         result = await call_next(request)
-        if 300 <= result.status_code < 400:
+
+        route = request.scope.get("endpoint")
+        if not route or not getattr(route, ez.EZ_ROUTE_ATTRIBUTE, False):
             return result
+        
 
         ez.emit(HTTP.Out, ez.response)
 
@@ -66,5 +60,17 @@ class EZApplication(FastAPI):
         Handles exceptions in the FastAPI app.
         """
         import ez
+        import traceback
+
+        tb = reversed(traceback.format_tb(exc.__traceback__))
         
-        return ez.response.text(str(exc))
+        ez.response.text(str(exc) + '\n' + "".join(tb))
+
+        return Response(
+            content=ez.response.body,
+            headers=ez.response.headers,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        )
+    
+    def remove_routes_by(self, filter: Callable[[BaseRoute], bool]):
+        self.routes = [route for route in self.routes if filter(route)]

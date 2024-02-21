@@ -13,4 +13,5 @@ class PluginModuleLoader(Loader):
         with open(module.__spec__.origin, "r") as file:
             code = file.read()
 
-            exec(code, vars(module))
+            bytecode = compile(code, module.__spec__.origin, "exec")
+            exec(bytecode, vars(module))

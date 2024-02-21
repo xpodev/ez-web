@@ -186,13 +186,10 @@ class PluginManager:
         
         return plugin
 
-    def load_plugins(self, *plugin_ids: PluginId, run_main: bool = True):
+    def load_plugins(self, *plugin_ids: PluginId):
         for plugin_id in plugin_ids:
             self._current_plugin = plugin_id
             self.load_plugin(plugin_id)
-
-        if run_main:
-            self.run_plugins(*plugin_ids)
 
     def run_plugins(self, *plugin_ids: PluginId):
         if not plugin_ids:

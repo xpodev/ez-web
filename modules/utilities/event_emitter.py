@@ -1,48 +1,77 @@
 from functools import wraps
-from typing import Callable
+from typing import Callable, Any
 from utilities.event import Event
 
+
+class EventHandler:
+    def __init__(self, key: Any, handler: Callable, priority: int = 0) -> None:
+        self.key = key
+        self.handler = handler
+        self.priority = priority
+
+    def __call__(self, *args, **kwargs):
+        return self.handler(*args, **kwargs)
+    
+    def __eq__(self, other):
+        if isinstance(other, EventHandler):
+            return self.key == other.key
+        return self.key == other
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    def __hash__(self):
+        return hash(self.key)
+
+
 class EventEmitter:
-    _events: dict[Event, list[Callable[..., None]]]
+    EZ_SYSTEM_ATTRIBUTE = "__ez_system__"
+
+    _events: dict[Event, list[EventHandler]]
 
     def __init__(self) -> None:
         self._events = {}
 
-    def _add_event_listener(self, event: Event, listener: Callable[..., None], priority: int = 0):
-        if priority < 0:
-            raise ValueError("Priority must be greater than or equal to 0.")
-        if hasattr(listener, "__ez_system__") and not priority:
-            priority = -1
-        listener.__ee_priority__ = priority
+    def _add_event_listener(self, event: Event, handler: EventHandler):
         if event not in self._events:
             self._events[event] = []
-            self._events[event].append(listener)
-        elif priority == -1:
-            self._events[event].insert(0, listener)
+            self._events[event].append(handler)
+        elif handler.priority == -1:
+            self._events[event].insert(0, handler)
         else:
-            for i, l in enumerate(self._events[event]):
-                if hasattr(l, "__ee_priority__") and l.__ee_priority__ != -1 and l.__ee_priority__ > priority:
-                    self._events[event].insert(i, listener)
+            for i, h in enumerate(self._events[event]):
+                if h.handler != -1 and h.handler > handler.priority:
+                    self._events[event].insert(i, handler)
                     break
             else:
-                self._events[event].append(listener)
+                self._events[event].append(handler)
     
     def _remove_event_listener(self, event: Event, listener: Callable[..., None]):
-        self._events[event].remove(getattr(listener, "__ee_key__", listener))
+        if event in self._events:
+            self._events[event].remove(listener)
         if not self._events[event]:
             del self._events[event]
 
-    def on(self, event: Event, f: Callable[..., None], priority: int = 0):
-        self._add_event_listener(event, f, priority)
+    def _create_handler(self, f: Callable[..., None], key: object, priority: int) -> EventHandler:
+        if priority < 0:
+            raise ValueError("Priority must be greater than or equal to 0")
+        if getattr(f, self.EZ_SYSTEM_ATTRIBUTE, False):
+            priority = -1
+        return EventHandler(key, f, priority)
+
+    def off(self, event: Event, f: Callable[..., None]):
+        self._remove_event_listener(event, f)
+
+    def on(self, event: Event, f: Callable[..., None], *, key: object = None, priority: int = 0):
+        self._add_event_listener(event, self._create_handler(f, key or f, priority))
         return f
 
-    def once(self, event: Event, f: Callable[..., None], priority: int = 0):
+    def once(self, event: Event, f: Callable[..., None], *, key: object = None, priority: int = 0):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            self._remove_event_listener(event, wrapper)
+            self._remove_event_listener(event, key or f)
             return f(*args, **kwargs)
-        self._add_event_listener(event, wrapper, priority)
-        f.__ee_key__ = wrapper
+        self._add_event_listener(event, self._create_handler(wrapper, key or f, priority))
         return f
     
     def emit(self, event: Event, *args, **kwargs) -> bool:

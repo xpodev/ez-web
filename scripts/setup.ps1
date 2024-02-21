@@ -52,11 +52,13 @@ if (!(Get-Command "pip" -ErrorAction SilentlyContinue)) {
 
 function Load {
     param(
-      [scriptblock]$function,
+      [ScriptBlock]$function,
       [string]$Label,
-      [string]$LabelColor = "White"
+      [string]$LabelColor = "White",
+      [string[]]$PassArgs = @()
     )
-    $job = Start-Job  -ScriptBlock $function
+
+    $job = Start-Job -ScriptBlock ${function} -ArgumentList $PassArgs -Init ([ScriptBlock]::Create("Set-Location $PSScriptRoot"))
 
     $symbols = @("-", "\", "|", "/")
     $i = 0;
@@ -71,61 +73,111 @@ function Load {
     }
 
     if ($job.State -eq "Completed") {
-        Write-Host -NoNewLine `b"OK" -ForegroundColor $GREEN
+        Write-Host `b"OK" -ForegroundColor $GREEN
     } else {
       Write-Host -NoNewLine `b"Failed" -ForegroundColor $RED
-      $error = Receive-Job $job
-      Write-Host $error
+      $jobError = Receive-Job $job
+      Write-Host $jobError
       return 1
     }
 }
 
-function CreateVenv {
-  $venvOutput = (py -m venv .venv 2>&1) -join "`n"
-  if ($LASTEXITCODE -ne 0) {
-    Error "$venvOutput`n"
-    Error "ERROR: Failed to create virtual environment."
-    If(Test-Path ./.venv) {
-      Remove-Item -Recurse -Force ./.venv
-    }
-    Exit 1
+$rootDir = Split-Path -Path $PSScriptRoot -Parent
+$pythonPath = Join-Path $rootDir "lib/python/python.exe"
+
+function InstallEmbeddablePython {
+  param (
+    [Parameter(Mandatory=$true)][string]$rootDir,
+    [Parameter(Mandatory=$true)][string]$pythonPath
+  )
+
+  if (Test-Path $pythonPath) {
+    return
   }
+
+  $arcitecture = if ([System.Environment]::Is64BitProcess) { "amd64" } else { "win32" }
+  $isArm = (Get-WmiObject -Class Win32_Processor | Select-Object -First 1).Name -match "arm"
+  if ($isArm) {
+    $arcitecture = "arm64"
+  }
+  $pythonVersion = "3.11.8"
+  $pythonUrl = "https://www.python.org/ftp/python/$pythonVersion/python-$pythonVersion-embed-$arcitecture.zip"
+
+  $pythonZip = Join-Path $env:TEMP "python.zip"
+
+  $webClient = New-Object System.Net.WebClient
+  $webClient.DownloadFile($pythonUrl, $pythonZip)
+
+  $destinationPath = Join-Path $rootDir "lib/python"
+
+  if (!(Test-Path $destinationPath)) {
+    New-Item -ItemType Directory -Path $destinationPath
+  }
+
+  Expand-Archive -Path $pythonZip -DestinationPath $destinationPath
+  Remove-Item -Path $pythonZip
+
+  # python311._pth file causes issues with PYTHONPATH
+  $py311PthFile = Join-Path $destinationPath  "python311._pth"
+  Remove-Item -Path $py311PthFile
+}
+
+function InstallPip {
+  param (
+    [Parameter(Mandatory=$true)][string]$pythonPath
+  )
+  $pipPath = Join-Path (Split-Path -Path $pythonPath -Parent) "Scripts/pip.exe"
+  if (Test-Path $pipPath) {
+    return
+  }
+
+  $pipDownloadUrl = "https://bootstrap.pypa.io/get-pip.py"
+  
+  $pythonDir = Split-Path -Path $pythonPath -Parent
+  $pipScript = Join-Path $pythonDir "get-pip.py"
+
+  $webClient = New-Object System.Net.WebClient
+  $webClient.DownloadFile($pipDownloadUrl, $pipScript)
+
+  & $pythonPath $pipScript
 }
 
 function InstallDependencies {
-  .venv\Scripts\Activate.ps1
-  $pipOutput = (pip install -r reqs.txt 2>&1) -join "`n"
-  if ($LASTEXITCODE -ne 0) {
-    Error $pipOutput
-    Write-Host " " -ForegroundColor $WHITE
-    Error "ERROR: Failed to install dependencies."
-    Exit 1
+  param (
+    [Parameter(Mandatory=$true)][string]$pythonPath
+  )
+
+  $requiremnets = @("sqlalchemy", "argon2-cffi", "python-dotenv", "fastapi", "python-socketio", "uvicorn", "pyYAML")
+
+  $requiremnets | ForEach-Object {
+    & $pythonPath -m pip install $_
+  }  
+}
+
+function InstallCoreModules {
+  param (
+    [Parameter(Mandatory=$true)][string]$rootDir,
+    [Parameter(Mandatory=$true)][string]$pythonPath
+  )
+
+  $coreModules = @("jsx")
+
+  $coreModulesPath = Join-Path $rootDir "core"
+  $coreModules | ForEach-Object {
+    & $pythonPath -m pip install $_ --target $coreModulesPath
+    Get-ChildItem -Path $coreModulesPath -Filter "$_*" -Recurse | Where-Object { $_.Name -match ".*\.dist-info" } | Remove-Item -Recurse -Force
   }
-  Success "Done"
 }
 
-if (!(Test-Path ./.venv)) {
-  Load -function {$function:CreateVenv} -Label "Creating virtual environment" -LabelColor $BLUE
-}
-
-Write-Output "import os;import sys;sys.path.insert(0, os.environ['VIRTUAL_ENV'].replace(os.sep + '.venv', '') + os.sep + 'src')" | Out-File -FilePath .venv\Lib\site-packages\dev.pth -Encoding ascii
-
-Load -function {$function:InstallDependencies} -Label "Installing dependencies" -LabelColor $BLUE
+Load -function ${function:InstallEmbeddablePython} -Label "Installing Python" -LabelColor $BLUE -PassArgs $rootDir, $pythonPath
+Load -function ${function:InstallPip} -Label "Installing pip" -LabelColor $BLUE -PassArgs $pythonPath
+Load -function ${function:InstallDependencies} -Label "Installing dependencies" -LabelColor $BLUE -PassArgs $pythonPath
+Load -function ${function:InstallCoreModules} -Label "Installing core modules" -LabelColor $BLUE -PassArgs $rootDir, $pythonPath
 
 Write-Output "
-To activate the virtual environment, run:
-
-    .venv/Scripts/Activate.ps1
-
-
 You can now run the app with:
 
-    python3 src/main.py
-
-
-or watch for changes with:
-
-    watchfiles ""py src/main.py"" src
+    ./scripts/dev.ps1 <path_to_site_dir>
 "
 Info "Happy coding!
 "
