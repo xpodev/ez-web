@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
-from typing import TypeAlias, TYPE_CHECKING
+from typing import TypeAlias
 from utilities.version import Version
 
  
@@ -11,7 +10,6 @@ PluginId: TypeAlias = str
 PackageName: TypeAlias = str
 
 
-@dataclass
 class PluginInfo(BaseModel):
     name: str
     version: Version
