@@ -368,7 +368,6 @@ def _setup(__ez=_EZ.ez):
         "title-changer"
     ]
     emit(PluginEvent.WillLoad, plugins)
-    # TODO: WTF????
     __pm.load_plugins(*plugins)
     emit(PluginEvent.DidLoad, plugins)
 
