@@ -11,7 +11,7 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from typing import Callable
 
-from fastapi import FastAPI, Request
+from fastapi import Request
 
 
 #region Variables
@@ -31,7 +31,6 @@ PLUGIN_API_DIR: Path = SITE_DIR / "lib" / "public-api" / "plugins"
 
 
 #region Load Modules
-
 
 import sys
 sys.path.append(str(MODULE_DIR))
@@ -60,13 +59,15 @@ __path__ = list(__path__)
 class _EZ:
     ez: "_EZ | None" = None
     ee: EventEmitter
-    app: FastAPI
+    app: EZApplication
 
     plugin_events: dict[str, list[tuple[str, Callable]]]
 
     mm: ModuleManager
 
-    def __init__(self, app: FastAPI | None = None, ee: EventEmitter | None = None) -> None:
+    def __init__(
+        self, app: EZApplication | None = None, ee: EventEmitter | None = None
+    ) -> None:
         if _EZ.ez is not None:
             raise RuntimeError("An instance of _EZ already exists.")
         _EZ.ez = self
@@ -155,11 +156,12 @@ def on(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.ez
     :param priority: The priority of the listener.
     """
     def _on(f):
-        f = event_function(f)
-        if is_plugin_event_handler(f):
-            __ez.add_plugin_event(get_plugin_event_handler_info(f).name, event, f)
-        return __ez.ee.on(event, f, priority)
-    
+        plugin = __ez.assert_can_register_events()
+        if plugin:
+            __ez.add_plugin_event(plugin, event, f)
+        
+        return __ez.ee.on(event, f, priority=priority)
+
     if maybe_f is not None:
         return _on(maybe_f)
     return _on
@@ -173,11 +175,11 @@ def once(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.
     :param priority: The priority of the listener.
     """
     def _once(f):
-        f = event_function(f)
-        if is_plugin_event_handler(f):
-            __ez.add_plugin_event(get_plugin_event_handler_info(f).name, event, f)
-        return __ez.ee.once(event, f, priority)
-    
+        plugin = __ez.assert_can_register_events()
+        if plugin:
+            __ez.add_plugin_event(plugin, event, f)
+        return __ez.ee.once(event, f, priority=priority)
+
     if maybe_f is not None:
         return _once(maybe_f)
     return _once
@@ -350,7 +352,19 @@ def _setup(__ez=_EZ.ez):
     if hasattr(__ez.app, "setup"):
         __ez.app.setup()
 
+    import sys
+    sys.path.append(str(MODULE_DIR))
+
     from ez.events import Modules
+    from plugins.ez_plugins import Plugins, __pm
+
+    @once(Plugins.WillLoad)
+    def _(_):
+        type(__ez).currently_loaded_plugin = property(lambda _: __pm.current_plugin)
+
+    @once(Plugins.DidLoad)
+    def _(_):
+        type(__ez).currently_loaded_plugin = property(lambda _: None)
 
     emit(Modules.WillLoad)
     if not __ez.mm.load_modules(reload=False):
@@ -361,18 +375,7 @@ def _setup(__ez=_EZ.ez):
 
     del Modules
 
-    from ez.plugins import PluginEvent, __pm
-
-    plugins = [
-        "test-plugin",
-        "title-changer"
-    ]
-    emit(PluginEvent.WillLoad, plugins)
-    # TODO: WTF????
-    __pm.load_plugins(*plugins)
-    emit(PluginEvent.DidLoad, plugins)
-
-    del PluginEvent
+    sys.path.remove(str(MODULE_DIR))
 
 
 def _run(setup=_setup):
@@ -397,12 +400,7 @@ del Event
 del _EZ
 
 del EZApplication
-# del PluginManager
 del ModuleManager
-
-# del UnknownPluginError
-
-del FastAPI
 
 del _run
 del _setup

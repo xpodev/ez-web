@@ -44,6 +44,8 @@ class PluginManager:
 
         self._public_api = public_api or ModuleType(PLUGINS_PUBLIC_API_MODULE_NAME)
 
+        self._current_plugin: PluginId = None
+
     #region Plugin Public API
 
     @property
@@ -84,7 +86,7 @@ class PluginManager:
 
     def get_plugins(self):
         return list(self._plugins.values())
-    
+
     #region Installers & Loaders
     
     def add_installer(self, installer: IPluginInstaller | Callable[[str], IPluginInstaller]) -> IPluginInstaller:
@@ -155,6 +157,10 @@ class PluginManager:
 
     #region Plugin Status
         
+    @property
+    def current_plugin(self):
+        return self._current_plugin
+        
     def enable(self, plugin_id: PluginId):
         ...
 
@@ -182,6 +188,7 @@ class PluginManager:
 
     def load_plugins(self, *plugin_ids: PluginId, run_main: bool = True):
         for plugin_id in plugin_ids:
+            self._current_plugin = plugin_id
             self.load_plugin(plugin_id)
 
         if run_main:
@@ -193,6 +200,7 @@ class PluginManager:
         for plugin_id in plugin_ids:
             plugin = self.get_plugin(plugin_id)
             loader = self.get_loader(plugin.loader.id)
+            self._current_plugin = plugin_id
             loader.run_main(plugin)
 
     #endregion
