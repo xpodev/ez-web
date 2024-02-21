@@ -5,7 +5,7 @@ from ..machinery.installer import IPluginInstaller, PluginInstallerInfo, PluginI
 from ..machinery.loader import IPluginLoader, PluginLoaderInfo
 
 from .errors import EZPluginError, UnknownPluginError, DuplicateIDError
-from .events import Plugins as PluginEvent
+from .events import Plugins
 
 from ..manager import PLUGIN_MANAGER as __pm
 from ..config import METADATA_FILENAME, PLUGINS_PUBLIC_API_MODULE_NAME
@@ -111,7 +111,7 @@ __all__ = [
     "DuplicateIDError",
     "PluginInfo",
     "EZPluginError",
-    "PluginEvent",
+    "Plugins",
     "get_plugins",
     "get_plugin",
     "install",
