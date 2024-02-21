@@ -11,7 +11,6 @@ PluginId: TypeAlias = str
 PackageName: TypeAlias = str
 
 
-@dataclass
 class PluginInfo(BaseModel):
     name: str
     version: Version
