@@ -64,6 +64,9 @@ class ModuleManager:
 
         for module in self._modules:
             module.entry_point.__spec__.loader.exec_module(module.entry_point)
+
+            if module.name is None:
+                module.name = getattr(module.entry_point, self.MODULE_NAME_ATTRIBUTE, module.name)
         
         if self._modules:
             self._modules.append(Module(
@@ -90,6 +93,8 @@ class ModuleManager:
             spec.loader.exec_module(module)
 
             name = getattr(module, self.MODULE_NAME_ATTRIBUTE, name)
+        else:
+            name = None
 
         spec = spec_from_file_location(
             full_name + '.__main__', 
