@@ -3,8 +3,8 @@ from ez import EZError
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from plugins.machinery.installer import PluginInstallerId
-    from plugins.machinery.loader import PluginLoaderId
+    from .machinery.installer import PluginInstallerId
+    from .machinery.loader import PluginLoaderId
 
 
 class EZPluginError(EZError):

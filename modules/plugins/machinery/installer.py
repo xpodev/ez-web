@@ -1,25 +1,21 @@
 from pydantic import BaseModel
-from pydantic.dataclasses import dataclass
 from pathlib import Path
 from typing import TypeAlias, ClassVar, TYPE_CHECKING
 
 from utilities.version import Version
 
 if TYPE_CHECKING:
-    from ..plugin_info import PluginId
+    from ..plugin import PluginId
 
 
 PluginInstallerId: TypeAlias = str
 
 
-@dataclass()
 class PluginInstallerInfo(BaseModel):
     id: PluginInstallerId
     name: str
 
 
-# This is not yet pydantic_dataclass because the `Version` type is not compatible with pydantic
-@dataclass
 class PluginInstallationResult(BaseModel):
     installer_id: PluginInstallerId
     package_name: str

@@ -5,8 +5,7 @@ from importlib.util import spec_from_file_location, module_from_spec
 
 from utilities.version import Version
 
-from ..plugin import Plugin
-from ..plugin_info import PluginId, PluginInfo
+from ..plugin import Plugin, PluginInfo, PluginId
 from ..machinery.loader import IPluginLoader, PluginLoaderInfo
 
 from .plugin import EZPlugin
@@ -15,7 +14,7 @@ from .plugin_module import PluginModule
 
 
 class EZPluginLoader(IPluginLoader):
-    info = PluginLoaderInfo.model_construct(
+    info = PluginLoaderInfo(
         id="ez.plugins.loader",
         name="EZ Plugin Loader",
     )

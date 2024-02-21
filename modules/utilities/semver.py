@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator, model_serializer
 
 
 class SemanticVersion(BaseModel):
@@ -27,6 +27,17 @@ class SemanticVersion(BaseModel):
             pre_release=pre_release, 
             build=build
         )
+    
+    @model_validator(mode="before")
+    @classmethod
+    def validate(cls, data, _):
+        if isinstance(data, str):
+            return cls.parse(data)
+        return data
+    
+    @model_serializer
+    def serialize(self):
+        return str(self)
     
     def __str__(self):
         return f"{self.major}.{self.minor}.{self.patch}{f'-{self.pre_release}' if self.pre_release else ''}{f'+{self.build}' if self.build else ''}"

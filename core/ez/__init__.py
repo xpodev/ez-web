@@ -365,13 +365,13 @@ def _setup(__ez=_EZ.ez):
 
     from ez.plugins import PluginEvent, __pm
 
-    emit(PluginEvent.WillLoad)
-    # TODO: WTF????
-    __pm.load_plugins(
+    plugins = [
         "test-plugin",
         "title-changer"
-    )
-    emit(PluginEvent.DidLoad)
+    ]
+    emit(PluginEvent.WillLoad, plugins)
+    __pm.load_plugins(*plugins)
+    emit(PluginEvent.DidLoad, plugins)
 
     del PluginEvent
 

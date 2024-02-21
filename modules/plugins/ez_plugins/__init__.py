@@ -1,7 +1,6 @@
 from typing import Callable
 
-from ..plugin import Plugin, PluginId, PluginAPI
-from ..plugin_info import PluginInfo
+from ..plugin import Plugin, PluginInfo, PluginId, PluginAPI
 from ..machinery.installer import IPluginInstaller, PluginInstallerInfo, PluginInstallerId
 from ..machinery.loader import IPluginLoader, PluginLoaderInfo
 
@@ -9,7 +8,7 @@ from .errors import EZPluginError, UnknownPluginError, DuplicateIDError
 from .events import Plugins as PluginEvent
 
 from ..manager import PLUGIN_MANAGER as __pm
-from ..config import METADATA_FILENAME
+from ..config import METADATA_FILENAME, PLUGINS_PUBLIC_API_MODULE_NAME
 
 
 def get_plugins() -> list[Plugin]:
@@ -41,7 +40,7 @@ def disable(plugin_id: PluginId) -> bool:
 
 
 def is_enabled(plugin_id: PluginId) -> bool:
-    plugin = __pm.get_plugin(plugin)
+    plugin = __pm.get_plugin(plugin_id)
     return plugin.enabled
 
 
@@ -67,7 +66,7 @@ def get_metadata_filename() -> str:
 
 
 def get_plugin_public_api_module_name() -> str:
-    ...
+    return PLUGINS_PUBLIC_API_MODULE_NAME
 
 
 def expose(plugin: Plugin, api: PluginAPI):
