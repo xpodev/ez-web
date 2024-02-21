@@ -10,14 +10,24 @@ class ResourceManager:
         self._loaders = {}
         self._resources = {}
 
-    def load_resource(self, uri: URI, resource_type: ResourceType | None = None, *, enable_caching: bool = True):
+    def load_resource(
+        self,
+        uri: URI,
+        resource_type: ResourceType | None = None,
+        *,
+        enable_caching: bool = True
+    ):
         try:
-            return self._resources[uri]
+            return (
+                self._resources[uri]
+                if enable_caching
+                else self._load_resource(uri, resource_type)
+            )
         except KeyError:
             resource = self._load_resource(uri, resource_type)
             if enable_caching:
                 self._resources[uri] = resource
             return resource
-        
+
     def _load_resource(self, uri: URI, resource_type: ResourceType | None = None):
         raise NotImplementedError
