@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+
 load_dotenv(dotenv_path=".env")
 del load_dotenv
 
@@ -14,7 +15,7 @@ from typing import Callable
 from fastapi import FastAPI, Request
 
 
-#region Variables
+# region Variables
 
 
 response: "_EzResponse | None" = None
@@ -27,13 +28,14 @@ MODULE_DIR: Path = EZ_FRAMEWORK_DIR / "modules"
 PLUGIN_API_DIR: Path = SITE_DIR / "lib" / "public-api" / "plugins"
 EZ_ROUTE_ATTRIBUTE = "ez_web_route"
 
-#endregion
+# endregion
 
 
-#region Load Modules
+# region Load Modules
 
 
 import sys
+
 sys.path.append(str(MODULE_DIR))
 
 import log
@@ -48,10 +50,10 @@ from ez.errors import EZError
 
 sys.path.remove(str(MODULE_DIR))
 
-#endregion
+# endregion
 
 
-#region EZ Internal
+# region EZ Internal
 
 
 __path__ = list(__path__)
@@ -63,10 +65,13 @@ class _EZ:
     app: FastAPI
 
     plugin_events: dict[str, list[tuple[str, Callable]]]
+    currently_loaded_plugin: str | None
 
     mm: ModuleManager
 
-    def __init__(self, app: FastAPI | None = None, ee: EventEmitter | None = None) -> None:
+    def __init__(
+        self, app: FastAPI | None = None, ee: EventEmitter | None = None
+    ) -> None:
         if _EZ.ez is not None:
             raise RuntimeError("An instance of _EZ already exists.")
         _EZ.ez = self
@@ -96,6 +101,22 @@ class _EZ:
         name = handler.__module__.removeprefix(PLUGIN_PREFIX + ".").split(".")[0]
         return name
 
+    def can_register_events(self):
+        return (
+            not hasattr(self, "currently_loaded_plugin")
+            or self.currently_loaded_plugin is not None
+        )
+    
+    def assert_can_register_events(self) -> str | None:
+        if not self.can_register_events():
+            raise RuntimeError(
+                "Cannot register events outside of a plugin's load or unload event."
+            )
+        if getattr(self, "currently_loaded_plugin", None) is None:
+            return None
+        return self.currently_loaded_plugin
+
+
 _EZ()
 
 
@@ -111,29 +132,25 @@ def event_function(f: Callable, *, __wraps=wraps, __ez=_EZ.ez):
     except UnknownPluginError:
         return f
     else:
+
         @__wraps(f)
         def wrapper(*args, **kwargs):
             if plugin.enabled:
                 return f(*args, **kwargs)
             return
+
         f.__ez_plugin__ = wrapper.__ez_plugin__ = plugin
         return wrapper
-    
+
 
 def is_plugin_event_handler(f):
     return callable(f) and getattr(f, "__ez_plugin__", None) is not None
 
 
-def get_plugin_event_handler_info(f):
-    if not is_plugin_event_handler(f):
-        raise ValueError(f"Function '{f.__qualname__}' is not a plugin event handler.")
-    return getattr(f, "__ez_plugin__")
-
-
 def extend_ez(module, alias: str = None, *, THIS=sys.modules[__name__]):
     import sys
     from pathlib import Path
-    
+
     path = Path(module.__file__)
 
     name = alias or path.stem
@@ -141,10 +158,10 @@ def extend_ez(module, alias: str = None, *, THIS=sys.modules[__name__]):
     sys.modules[f"ez.{name}"] = module
 
 
-#endregion
+# endregion
 
 
-#region Event System
+# region Event System
 
 
 def on(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.ez):
@@ -154,12 +171,14 @@ def on(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.ez
     :param event: The event to listen to.
     :param priority: The priority of the listener.
     """
+
     def _on(f):
-        f = event_function(f)
-        if is_plugin_event_handler(f):
-            __ez.add_plugin_event(get_plugin_event_handler_info(f).name, event, f)
-        return __ez.ee.on(event, f, priority)
-    
+        plugin = __ez.assert_can_register_events()
+        if plugin:
+            __ez.add_plugin_event(plugin, event, f)
+        
+        return __ez.ee.on(event, f, f, priority)
+
     if maybe_f is not None:
         return _on(maybe_f)
     return _on
@@ -172,12 +191,13 @@ def once(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.
     :param event: The event to listen to.
     :param priority: The priority of the listener.
     """
+
     def _once(f):
-        f = event_function(f)
-        if is_plugin_event_handler(f):
-            __ez.add_plugin_event(get_plugin_event_handler_info(f).name, event, f)
+        plugin = __ez.assert_can_register_events()
+        if plugin:
+            __ez.add_plugin_event(plugin, event, f)
         return __ez.ee.once(event, f, priority)
-    
+
     if maybe_f is not None:
         return _once(maybe_f)
     return _once
@@ -189,13 +209,13 @@ def emit(event: Event, *args, __ez=_EZ.ez, **kwargs):
 
     :param event: The event to emit.
     """
-    return __ez.ez.ee.emit(event, *args, **kwargs)
+    return __ez.ee.emit(event, *args, **kwargs)
 
 
-#endregion
+# endregion
 
 
-#region Module System
+# region Module System
 
 
 def reload_modules(__ez=_EZ.ez):
@@ -206,13 +226,19 @@ def get_modules(__ez=_EZ.ez):
     return __ez.mm.get_modules()
 
 
-#endregion
+# endregion
 
 
-#region Routing
+# region Routing
 
 
-def add_route(route: str, methods: list[str], __ez=_EZ.ez, __wraps=wraps, __iscoroutinefunction=iscoroutinefunction) -> Callable[[Callable], None]:
+def add_route(
+    route: str,
+    methods: list[str],
+    __ez=_EZ.ez,
+    __wraps=wraps,
+    __iscoroutinefunction=iscoroutinefunction,
+) -> Callable[[Callable], None]:
     """
     Adds a route to the FastAPI app.
 
@@ -222,7 +248,7 @@ def add_route(route: str, methods: list[str], __ez=_EZ.ez, __wraps=wraps, __isco
 
     def decorator(handler):
         handler = event_function(handler)
-        
+
         if __iscoroutinefunction(handler):
 
             @__wraps(handler)
@@ -249,6 +275,7 @@ def add_route(route: str, methods: list[str], __ez=_EZ.ez, __wraps=wraps, __isco
 
 # region: Methods
 
+
 def get(route: str, __ez=_EZ.ez):
     """
     Adds a GET route to the FastAPI app.
@@ -256,6 +283,7 @@ def get(route: str, __ez=_EZ.ez):
     :param route: The route to add.
     """
     return add_route(route, ["GET"])
+
 
 def post(route: str):
     """
@@ -265,6 +293,7 @@ def post(route: str):
     """
     return add_route(route, ["POST"])
 
+
 def put(route: str):
     """
     Adds a PUT route to the FastAPI app.
@@ -272,6 +301,7 @@ def put(route: str):
     :param route: The route to add.
     """
     return add_route(route, ["PUT"])
+
 
 def delete(route: str):
     """
@@ -281,6 +311,7 @@ def delete(route: str):
     """
     return add_route(route, ["DELETE"])
 
+
 def patch(route: str):
     """
     Adds a PATCH route to the FastAPI app.
@@ -288,6 +319,7 @@ def patch(route: str):
     :param route: The route to add.
     """
     return add_route(route, ["PATCH"])
+
 
 def options(route: str):
     """
@@ -297,6 +329,7 @@ def options(route: str):
     """
     return add_route(route, ["OPTIONS"])
 
+
 def head(route: str):
     """
     Adds a HEAD route to the FastAPI app.
@@ -304,6 +337,7 @@ def head(route: str):
     :param route: The route to add.
     """
     return add_route(route, ["HEAD"])
+
 
 def trace(route: str):
     """
@@ -313,6 +347,7 @@ def trace(route: str):
     """
     return add_route(route, ["TRACE"])
 
+
 def connect(route: str):
     """
     Adds a CONNECT route to the FastAPI app.
@@ -320,6 +355,7 @@ def connect(route: str):
     :param route: The route to add.
     """
     return add_route(route, ["CONNECT"])
+
 
 def all(route: str):
     """
@@ -342,10 +378,11 @@ def all(route: str):
         ],
     )
 
+
 # endregion
 
 
-#endregion
+# endregion
 
 
 def _setup(__ez=_EZ.ez):
@@ -365,12 +402,14 @@ def _setup(__ez=_EZ.ez):
 
     from ez.plugins import PluginEvent, __pm
 
-    plugins = [
-        "test-plugin",
-        "title-changer"
-    ]
+    plugins = ["test-plugin", "title-changer"]
     emit(PluginEvent.WillLoad, plugins)
-    __pm.load_plugins(*plugins)
+
+    for plugin_id in __pm.load_plugins(*plugins):
+        __ez.currently_loaded_plugin = plugin_id
+    for plugin in __pm.run_plugins(*plugins):
+        __ez.currently_loaded_plugin = plugin.info.package_name
+
     emit(PluginEvent.DidLoad, plugins)
 
     del PluginEvent
@@ -390,7 +429,7 @@ def run(_run=_run):
 _app = _EZ.ez.app
 
 
-#region: Cleanup
+# region: Cleanup
 
 
 del EventEmitter
@@ -426,4 +465,4 @@ __all__ = [
 ]
 
 
-#endregion
+# endregion

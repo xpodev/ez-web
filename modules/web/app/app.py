@@ -1,4 +1,7 @@
+from http import HTTPStatus
+from typing import Callable
 from fastapi import FastAPI, Request, Response
+from fastapi.routing import BaseRoute
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
@@ -57,5 +60,17 @@ class EZApplication(FastAPI):
         Handles exceptions in the FastAPI app.
         """
         import ez
+        import traceback
+
+        tb = reversed(traceback.format_tb(exc.__traceback__))
         
-        return str(exc)
+        ez.response.text(str(exc) + '\n' + "".join(tb))
+
+        return Response(
+            content=ez.response.body,
+            headers=ez.response.headers,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        )
+    
+    def remove_routes_by(self, filter: Callable[[BaseRoute], bool]):
+        self.routes = [route for route in self.routes if filter(route)]
