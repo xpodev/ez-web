@@ -18,7 +18,7 @@
                 "3742"
             ],
             "env": {
-                "EZ_PYTHONPATH": "${workspaceFolder}/lib/python;${workspaceFolder}/core;./lib/dependencies",
+                "PYTHONPATH": "${workspaceFolder}/lib/python;${workspaceFolder}/core;./lib/dependencies",
             }
         }
     ]
