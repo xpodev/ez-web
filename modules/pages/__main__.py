@@ -5,6 +5,7 @@ from ez.database import engine
 from .dbi import PAGE_REPOSITORY, PageInfoModel
 from .router import pages_api_router
 
+
 from jsx.html import *
 
 import ez.templates
@@ -40,3 +41,4 @@ def main():
 main()
 
 ez.add_router("/api/pages", pages_api_router)
+
