@@ -7,6 +7,7 @@ from importlib import reload
 from pathlib import Path
 
 import sys
+
 THIS = sys.modules[__name__]
 
 
@@ -22,10 +23,11 @@ class ModuleManager:
         self.module_dir = module_dir
         self._modules: list[Module] = []
 
-        sys.modules[self.MODULE_PREFIX] = type("", (ModuleType,), {
-            "__path__": [str(module_dir)],
-            "__package__": str(self.MODULE_PREFIX)
-        })(self.MODULE_PREFIX)
+        sys.modules[self.MODULE_PREFIX] = type(
+            "",
+            (ModuleType,),
+            {"__path__": [str(module_dir)], "__package__": str(self.MODULE_PREFIX)},
+        )(self.MODULE_PREFIX)
 
     def load_modules(self, *, reload: bool = True) -> bool:
         """
@@ -49,7 +51,7 @@ class ModuleManager:
             return False
         if not self.module_dir.is_dir():
             return False
-        
+
         for item in self.module_dir.iterdir():
             name = item.stem
             if item.is_dir():
@@ -62,18 +64,28 @@ class ModuleManager:
                 continue
             self._load_module_from(name, item)
 
-        for module in self._modules:
+        for module in sorted(self._modules, key=lambda m: m.priority, reverse=True):
             module.entry_point.__spec__.loader.exec_module(module.entry_point)
 
             if module.name is None:
-                module.name = getattr(module.entry_point, self.MODULE_NAME_ATTRIBUTE, module.name)
-        
+                module.name = getattr(
+                    module.entry_point,
+                    self.MODULE_NAME_ATTRIBUTE,
+                    (
+                        module.entry_point_path.stem
+                        if module.entry_point_path.name != self.PACKAGE_ENTRY_POINT
+                        else module.entry_point_path.parent.name
+                    ),
+                )
+
         if self._modules:
-            self._modules.append(Module(
-                "Module Manager",
-                THIS,
-                Path(THIS.__file__),
-            ))
+            self._modules.append(
+                Module(
+                    "Module Manager",
+                    THIS,
+                    Path(THIS.__file__),
+                )
+            )
 
         return bool(self._modules)
 
@@ -84,26 +96,22 @@ class ModuleManager:
         init_file = package_dir / "__init__.py"
         if init_file.exists():
             spec = spec_from_file_location(
-                full_name, 
-                init_file, 
-                submodule_search_locations=[
-                    str(package_dir)
-                ])
+                full_name, init_file, submodule_search_locations=[str(package_dir)]
+            )
             module = sys.modules[spec.name] = module_from_spec(spec)
             spec.loader.exec_module(module)
 
             name = getattr(module, self.MODULE_NAME_ATTRIBUTE, name)
+            priority = getattr(module, "__priority__", 0)
         else:
             name = None
+            priority = 0
 
-        spec = spec_from_file_location(
-            full_name + '.__main__', 
-            str(path)
-        )
+        spec = spec_from_file_location(full_name + ".__main__", str(path))
         entry_point = module_from_spec(spec)
         sys.modules[spec.name] = entry_point
 
-        module = Module(name, entry_point, path)
+        module = Module(name, entry_point, path, priority=priority)
         self._modules.append(module)
 
     def reload_module(self, module: Module):
@@ -118,4 +126,4 @@ class ModuleManager:
 
     @classmethod
     def get_module_full_name(cls, name: str):
-        return cls.MODULE_PREFIX + '.' + name
+        return cls.MODULE_PREFIX + "." + name
