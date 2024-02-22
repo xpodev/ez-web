@@ -18,7 +18,7 @@ from fastapi import Request
 # region Variables
 
 
-response: "_EzResponse | None" = None
+response: "EZResponse | None" = None
 request: "Request | None" = None
 
 SITE_DIR: Path = args.sitedir.resolve()
@@ -42,7 +42,7 @@ import log
 from modules.manager import ModuleManager
 from utilities.event import Event
 from utilities.event_emitter import EventEmitter
-from web.response import _EzResponse
+from web.response import EZResponse
 from web.app.app import EZApplication
 
 from ez.errors import EZError
@@ -441,7 +441,7 @@ del ModuleManager
 del _run
 del _setup
 
-del _EzResponse
+del EZResponse
 del wraps
 del iscoroutinefunction
 del Callable
