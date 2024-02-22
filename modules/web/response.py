@@ -1,8 +1,10 @@
 from json import dumps
+from typing import Any
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import Response
 
 
-class _EzResponse:
+class EZResponse:
     def __init__(self):
         self._headers = {}
         self._status_code = 0
@@ -164,3 +166,10 @@ class _EzResponse:
             case _:
                 self._body = data
                 return self
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        return Response(
+            content=self.body,
+            status_code=self.status_code,
+            headers=self.headers,
+        )

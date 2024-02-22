@@ -4,7 +4,13 @@ import ez.plugins
 
 @ez.get("/api/plugins")
 def get_plugins():
-    return [plugin.info.model_dump() for plugin in ez.plugins.get_plugins()]
+    return [
+        {
+            **plugin.info.model_dump(),
+            "enabled": plugin.enabled,
+        }
+        for plugin in ez.plugins.get_plugins()
+    ]
 
 
 @ez.post("/api/plugins/{plugin_id}/enable")

@@ -12,13 +12,13 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from typing import Callable
 
-from fastapi import FastAPI, Request
+from fastapi import Request
 
 
 # region Variables
 
 
-response: "_EzResponse | None" = None
+response: "EZResponse | None" = None
 request: "Request | None" = None
 
 SITE_DIR: Path = args.sitedir.resolve()
@@ -26,13 +26,11 @@ EZ_FRAMEWORK_DIR: Path = Path(__file__).parents[2]
 PLUGINS_DIR: Path = SITE_DIR / "plugins"
 MODULE_DIR: Path = EZ_FRAMEWORK_DIR / "modules"
 PLUGIN_API_DIR: Path = SITE_DIR / "lib" / "public-api" / "plugins"
-EZ_ROUTE_ATTRIBUTE = "ez_web_route"
 
 # endregion
 
 
 # region Load Modules
-
 
 import sys
 
@@ -43,8 +41,9 @@ import log
 from modules.manager import ModuleManager
 from utilities.event import Event
 from utilities.event_emitter import EventEmitter
-from web.response import _EzResponse
-from web.app.app import EZApplication
+from web.response import EZResponse
+from web.app.app import EZApplication, EZ_ROUTE_ATTRIBUTE
+from web.router import EZRouter
 
 from ez.errors import EZError
 
@@ -62,7 +61,7 @@ __path__ = list(__path__)
 class _EZ:
     ez: "_EZ | None" = None
     ee: EventEmitter
-    app: FastAPI
+    app: EZApplication
 
     plugin_events: dict[str, list[tuple[str, Callable]]]
     currently_loaded_plugin: str | None
@@ -70,7 +69,7 @@ class _EZ:
     mm: ModuleManager
 
     def __init__(
-        self, app: FastAPI | None = None, ee: EventEmitter | None = None
+        self, app: EZApplication | None = None, ee: EventEmitter | None = None
     ) -> None:
         if _EZ.ez is not None:
             raise RuntimeError("An instance of _EZ already exists.")
@@ -106,7 +105,7 @@ class _EZ:
             not hasattr(self, "currently_loaded_plugin")
             or self.currently_loaded_plugin is not None
         )
-    
+
     def assert_can_register_events(self) -> str | None:
         if not self.can_register_events():
             raise RuntimeError(
@@ -176,8 +175,8 @@ def on(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.ez
         plugin = __ez.assert_can_register_events()
         if plugin:
             __ez.add_plugin_event(plugin, event, f)
-        
-        return __ez.ee.on(event, f, f, priority)
+
+        return __ez.ee.on(event, f, priority=priority)
 
     if maybe_f is not None:
         return _on(maybe_f)
@@ -196,7 +195,7 @@ def once(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.
         plugin = __ez.assert_can_register_events()
         if plugin:
             __ez.add_plugin_event(plugin, event, f)
-        return __ez.ee.once(event, f, priority)
+        return __ez.ee.once(event, f, priority=priority)
 
     if maybe_f is not None:
         return _once(maybe_f)
@@ -238,6 +237,7 @@ def add_route(
     __ez=_EZ.ez,
     __wraps=wraps,
     __iscoroutinefunction=iscoroutinefunction,
+    __EZ_ROUTE_ATTRIBUTE=EZ_ROUTE_ATTRIBUTE,
 ) -> Callable[[Callable], None]:
     """
     Adds a route to the FastAPI app.
@@ -256,7 +256,7 @@ def add_route(
                 result = await handler(*args, **kwargs)
                 return response._auto_body(result)
 
-            setattr(wrapper, EZ_ROUTE_ATTRIBUTE, True)
+            setattr(wrapper, __EZ_ROUTE_ATTRIBUTE, True)
             __ez.app.add_api_route(route, endpoint=wrapper, methods=methods)
         else:
 
@@ -265,7 +265,7 @@ def add_route(
                 result = handler(*args, **kwargs)
                 return response._auto_body(result)
 
-            setattr(wrapper, EZ_ROUTE_ATTRIBUTE, True)
+            setattr(wrapper, __EZ_ROUTE_ATTRIBUTE, True)
             __ez.app.add_api_route(route, endpoint=wrapper, methods=methods)
 
         log.debug(f"{methods} {route} -> {handler.__name__}")
@@ -379,6 +379,25 @@ def all(route: str):
     )
 
 
+def router(middlewares=None, __ez=_EZ.ez, __EZRouter=EZRouter, *args, **kwargs):
+    """
+    Creates a new FastAPI router.
+
+    :param middlewares: The middlewares to use.
+    """
+    return __EZRouter(middlewares, *args, **kwargs)
+
+
+def add_router(route: str, router, __ez=_EZ.ez):
+    """
+    Adds a router to the FastAPI app.
+
+    :param route: The route to add.
+    :param router: The router to add.
+    """
+    __ez.app.include_router(router, prefix=route)
+
+
 # endregion
 
 
@@ -389,7 +408,20 @@ def _setup(__ez=_EZ.ez):
     if hasattr(__ez.app, "setup"):
         __ez.app.setup()
 
+    import sys
+
+    sys.path.append(str(MODULE_DIR))
+
     from ez.events import Modules
+    from plugins.ez_plugins import Plugins, __pm
+
+    @once(Plugins.WillLoad)
+    def _(_):
+        type(__ez).currently_loaded_plugin = property(lambda _: __pm.current_plugin)
+
+    @once(Plugins.DidLoad)
+    def _(_):
+        type(__ez).currently_loaded_plugin = property(lambda _: None)
 
     emit(Modules.WillLoad)
     if not __ez.mm.load_modules(reload=False):
@@ -400,19 +432,7 @@ def _setup(__ez=_EZ.ez):
 
     del Modules
 
-    from ez.plugins import PluginEvent, __pm
-
-    plugins = ["test-plugin", "title-changer"]
-    emit(PluginEvent.WillLoad, plugins)
-
-    for plugin_id in __pm.load_plugins(*plugins):
-        __ez.currently_loaded_plugin = plugin_id
-    for plugin in __pm.run_plugins(*plugins):
-        __ez.currently_loaded_plugin = plugin.info.package_name
-
-    emit(PluginEvent.DidLoad, plugins)
-
-    del PluginEvent
+    sys.path.remove(str(MODULE_DIR))
 
 
 def _run(setup=_setup):
@@ -437,17 +457,15 @@ del Event
 del _EZ
 
 del EZApplication
-# del PluginManager
 del ModuleManager
-
-# del UnknownPluginError
-
-del FastAPI
 
 del _run
 del _setup
 
-del _EzResponse
+del EZ_ROUTE_ATTRIBUTE
+
+del EZResponse
+del EZRouter
 del wraps
 del iscoroutinefunction
 del Callable

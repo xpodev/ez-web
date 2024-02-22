@@ -44,6 +44,8 @@ class PluginManager:
 
         self._public_api = public_api or ModuleType(PLUGINS_PUBLIC_API_MODULE_NAME)
 
+        self._current_plugin: PluginId = None
+
     #region Plugin Public API
 
     @property
@@ -84,7 +86,7 @@ class PluginManager:
 
     def get_plugins(self):
         return list(self._plugins.values())
-    
+
     #region Installers & Loaders
     
     def add_installer(self, installer: IPluginInstaller | Callable[[str], IPluginInstaller]) -> IPluginInstaller:
@@ -155,14 +157,21 @@ class PluginManager:
 
     #region Plugin Status
         
+    @property
+    def current_plugin(self):
+        return self._current_plugin
+        
     def enable(self, plugin_id: PluginId):
         ...
 
     def disable(self, plugin_id: PluginId):
         ...
 
-    def load_plugin(self, plugin_id: PluginId):
-        loader = self._default_plugin_loader
+    def load_plugin(self, plugin_id: PluginId, loader_id: PluginLoaderId = None):
+        if loader_id is None:
+            loader = self._default_plugin_loader
+        else:
+            loader = self.get_loader(loader_id)
 
         try:
             plugin = self.get_plugin(plugin_id)
@@ -180,10 +189,15 @@ class PluginManager:
         
         return plugin
 
-    def load_plugins(self, *plugin_ids: PluginId):
-        for plugin_id in plugin_ids:
-            yield plugin_id
-            self.load_plugin(plugin_id)
+    def load_plugins(self, *plugin_ids: PluginId, loader: Callable[[PluginId], PluginLoaderId | None] | PluginLoaderId = None):
+        if callable(loader):
+            for plugin_id in plugin_ids:
+                self._current_plugin = plugin_id
+                self.load_plugin(plugin_id, loader(plugin_id))
+        else:
+            for plugin_id in plugin_ids:
+                self._current_plugin = plugin_id
+                self.load_plugin(plugin_id, loader)
 
     def run_plugins(self, *plugin_ids: PluginId):
         if not plugin_ids:
@@ -191,7 +205,7 @@ class PluginManager:
         for plugin_id in plugin_ids:
             plugin = self.get_plugin(plugin_id)
             loader = self.get_loader(plugin.loader.id)
-            yield plugin
+            self._current_plugin = plugin_id
             loader.run_main(plugin)
 
     #endregion

@@ -45,22 +45,22 @@ class EZPluginLoader(IPluginLoader):
             plugin.module = self._load_module(plugin.info.package_name)
 
     def _load_plugin(self, plugin_id: PluginId) -> EZPlugin:
+        from .dbi import PLUGIN_REPOSITORY
+
         module = self._load_module(plugin_id)
         sys.modules[module.__name__] = module
 
         plugin_dir = self.plugin_dir / plugin_id
 
-        with open(plugin_dir / "plugin-metadata") as file:
-            metadata = {
-                    key.strip(): value.strip()
-                    for key, value in (line.split(":", 1) for line in file)
-                }
-            metadata["version"] = Version.parse(metadata["version"])
-            if "description" not in metadata:
-                metadata["description"] = module.__doc__
-            info = PluginInfo.model_construct(
-                **metadata
-            )
+        info_model = PLUGIN_REPOSITORY.get(plugin_id)
+        info = PluginInfo(
+            name=info_model.name,
+            version=Version.parse(info_model.version),
+            description=info_model.description,
+            installer_id=info_model.installer_id,
+            package_name=info_model.package_name,
+            author=info_model.author,
+        )
 
         module.__info__ = info
         module.__loader__ = self.info.id
@@ -69,16 +69,17 @@ class EZPluginLoader(IPluginLoader):
         ez_plugin = EZPlugin(
             info=info,
             loader=self.info,
-            enabled=True,
+            enabled=info_model.enabled,
             api=None,
             module=module
         )
 
         module.__plugin__ = ez_plugin
 
-        self._execute_module(module)
+        if ez_plugin.enabled:
+            self._execute_module(module)
 
-        ez_plugin.api = getattr(module, self.get_api_attribute_name(), None)
+            ez_plugin.api = getattr(module, self.get_api_attribute_name(), None)
 
         return ez_plugin
     
