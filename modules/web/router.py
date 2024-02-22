@@ -5,12 +5,13 @@ from starlette.responses import Response
 from inspect import iscoroutinefunction
 from functools import wraps
 
-from ez.ez_response import _EzResponse
+from .response import EZResponse
+from .app.app import EZ_ROUTE_ATTRIBUTE
 
-MiddlewareFunction: TypeAlias = Callable[[Request, _EzResponse, Callable], None]
+MiddlewareFunction: TypeAlias = Callable[[Request, EZResponse, Callable], None]
 
 
-class _EzRouter(APIRouter):
+class EZRouter(APIRouter):
     def __init__(self, middleware: list[MiddlewareFunction] = None, *args, **kwargs):
         self.middleware = middleware
         self._current_middleware = 0
@@ -25,6 +26,9 @@ class _EzRouter(APIRouter):
         include_in_schema: bool = True,
         **kwargs: Any,
     ) -> None:
+        if path == "/":
+            path = ""       
+
         super().add_route(
             path,
             self._make_wrapper(endpoint),
@@ -53,18 +57,21 @@ class _EzRouter(APIRouter):
     ):
         import ez
 
+
         if iscoroutinefunction(endpoint):
 
             @wraps(endpoint)
-            async def wrapper(request: Request):
-                result = await endpoint(request)
-                ez.response._body = result
+            async def wrapper(*args, **kwargs):
+                result = await endpoint(*args, **kwargs)
+                ez.response._auto_body(result)
         else:
 
             @wraps(endpoint)
-            def wrapper(request: Request):
-                result = endpoint(request)
-                ez.response._body = result
+            def wrapper(*args, **kwargs):
+                result = endpoint(*args, **kwargs)
+                ez.response._auto_body(result)
+
+        return_endpoint = wrapper
 
         if self.middleware:
             i = -1
@@ -78,6 +85,7 @@ class _EzRouter(APIRouter):
                     wrapper(ez.request)
                     i = -1
 
-            return next_middleware
+            return_endpoint = next_middleware
 
-        return wrapper
+        setattr(return_endpoint, EZ_ROUTE_ATTRIBUTE, True)
+        return return_endpoint

@@ -26,7 +26,6 @@ EZ_FRAMEWORK_DIR: Path = Path(__file__).parents[2]
 PLUGINS_DIR: Path = SITE_DIR / "plugins"
 MODULE_DIR: Path = EZ_FRAMEWORK_DIR / "modules"
 PLUGIN_API_DIR: Path = SITE_DIR / "lib" / "public-api" / "plugins"
-EZ_ROUTE_ATTRIBUTE = "ez_web_route"
 
 # endregion
 
@@ -43,7 +42,8 @@ from modules.manager import ModuleManager
 from utilities.event import Event
 from utilities.event_emitter import EventEmitter
 from web.response import EZResponse
-from web.app.app import EZApplication
+from web.app.app import EZApplication, EZ_ROUTE_ATTRIBUTE
+from web.router import EZRouter
 
 from ez.errors import EZError
 
@@ -105,7 +105,7 @@ class _EZ:
             not hasattr(self, "currently_loaded_plugin")
             or self.currently_loaded_plugin is not None
         )
-    
+
     def assert_can_register_events(self) -> str | None:
         if not self.can_register_events():
             raise RuntimeError(
@@ -175,7 +175,7 @@ def on(event: Event, maybe_f: Callable = None, *, priority: int = 0, __ez=_EZ.ez
         plugin = __ez.assert_can_register_events()
         if plugin:
             __ez.add_plugin_event(plugin, event, f)
-        
+
         return __ez.ee.on(event, f, priority=priority)
 
     if maybe_f is not None:
@@ -237,6 +237,7 @@ def add_route(
     __ez=_EZ.ez,
     __wraps=wraps,
     __iscoroutinefunction=iscoroutinefunction,
+    __EZ_ROUTE_ATTRIBUTE=EZ_ROUTE_ATTRIBUTE,
 ) -> Callable[[Callable], None]:
     """
     Adds a route to the FastAPI app.
@@ -255,7 +256,7 @@ def add_route(
                 result = await handler(*args, **kwargs)
                 return response._auto_body(result)
 
-            setattr(wrapper, EZ_ROUTE_ATTRIBUTE, True)
+            setattr(wrapper, __EZ_ROUTE_ATTRIBUTE, True)
             __ez.app.add_api_route(route, endpoint=wrapper, methods=methods)
         else:
 
@@ -264,7 +265,7 @@ def add_route(
                 result = handler(*args, **kwargs)
                 return response._auto_body(result)
 
-            setattr(wrapper, EZ_ROUTE_ATTRIBUTE, True)
+            setattr(wrapper, __EZ_ROUTE_ATTRIBUTE, True)
             __ez.app.add_api_route(route, endpoint=wrapper, methods=methods)
 
         log.debug(f"{methods} {route} -> {handler.__name__}")
@@ -378,6 +379,25 @@ def all(route: str):
     )
 
 
+def router(middlewares=None, __ez=_EZ.ez, __EZRouter=EZRouter, *args, **kwargs):
+    """
+    Creates a new FastAPI router.
+
+    :param middlewares: The middlewares to use.
+    """
+    return __EZRouter(middlewares, *args, **kwargs)
+
+
+def add_router(route: str, router, __ez=_EZ.ez):
+    """
+    Adds a router to the FastAPI app.
+
+    :param route: The route to add.
+    :param router: The router to add.
+    """
+    __ez.app.include_router(router, prefix=route)
+
+
 # endregion
 
 
@@ -389,6 +409,7 @@ def _setup(__ez=_EZ.ez):
         __ez.app.setup()
 
     import sys
+
     sys.path.append(str(MODULE_DIR))
 
     from ez.events import Modules
@@ -441,7 +462,10 @@ del ModuleManager
 del _run
 del _setup
 
+del EZ_ROUTE_ATTRIBUTE
+
 del EZResponse
+del EZRouter
 del wraps
 del iscoroutinefunction
 del Callable
