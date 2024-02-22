@@ -427,7 +427,11 @@ def _setup(__ez=_EZ.ez):
     if not __ez.mm.load_modules(reload=False):
         log.info("No modules were loaded.")
     else:
-        log.info(f"Loaded {len(get_modules())} modules from '{MODULE_DIR}'")
+        log.info(f"Loaded {len(get_modules())} modules from '{MODULE_DIR}':")
+
+        for module in __ez.mm.get_modules():
+            log.info(f"\tLoaded module '{module}'")
+
     emit(Modules.DidLoad)
 
     del Modules

@@ -10,6 +10,10 @@ class SemanticVersion(BaseModel):
 
     @classmethod
     def parse(cls, version: str):
+        return cls.model_validate(cls.parse_json(version))
+    
+    @classmethod
+    def parse_json(cls, version: str):
         major, minor, patch = version.split(".")
         pre_release = ""
         build = ""
@@ -20,23 +24,24 @@ class SemanticVersion(BaseModel):
         if "+" in pre_release:
             pre_release, build = pre_release.split("+")
 
-        return cls.model_construct(
-            major=int(major), 
-            minor=int(minor), 
-            patch=int(patch), 
-            pre_release=pre_release, 
-            build=build
-        )
-    
+        return {
+            "major": int(major),
+            "minor": int(minor),
+            "patch": int(patch),
+            "pre_release": pre_release,
+            "build": build
+        }
+
+    # @root_validator(pre=True)
     @model_validator(mode="before")
     @classmethod
-    def validate(cls, data, _):
+    def _model_parse(cls, data):
         if isinstance(data, str):
-            return cls.parse(data)
+            return cls.parse_json(data)
         return data
     
     @model_serializer
-    def serialize(self):
+    def _model_serialize(self):
         return str(self)
     
     def __str__(self):
