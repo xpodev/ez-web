@@ -10,6 +10,7 @@ from ..events import HTTP
 
 
 STATIC_PATH = "/static"
+EZ_ROUTE_ATTRIBUTE = "ez_web_route"
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
@@ -24,7 +25,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         route = request.scope.get("endpoint")
-        if not route or not getattr(route, ez.EZ_ROUTE_ATTRIBUTE, False):
+        if not route or not getattr(route, EZ_ROUTE_ATTRIBUTE, False):
             return response
 
         if response.status_code >= 400:
