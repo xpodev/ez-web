@@ -1,8 +1,10 @@
-from functools import wraps
 import ez
 
-from .dbi import PAGE_REPOSITORY, PageInfoModel
 from ez.database import engine
+
+from .dbi import PAGE_REPOSITORY, PageInfoModel
+from .router import pages_api_router
+
 
 from jsx.html import *
 
@@ -18,10 +20,9 @@ def make_page_route(page: PageInfoModel):
 
     render = template_manager.get(page.template_name).render
 
-    @wraps(render)
-    def page_route(*args, **kwargs):
-        return render(*args, **kwargs)
-    
+    def page_route():
+        return render(page)
+
     ez.get(page.slug)(page_route)
 
 
@@ -38,3 +39,6 @@ def main():
 
 
 main()
+
+ez.add_router("/api/pages", pages_api_router)
+
