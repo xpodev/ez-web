@@ -3,6 +3,7 @@ from sqlalchemy import Column, String, Boolean, Integer
 from data.database import *
 
 from .installer import EZPluginInstaller
+from .loader import EZPluginLoader
 
 
 class PluginInfoModel(DatabaseModel):
@@ -16,6 +17,7 @@ class PluginInfoModel(DatabaseModel):
     package_name: str = Column(String, nullable=False, unique=True)
     author: str = Column(String, nullable=False)
     enabled: bool = Column(Boolean, nullable=False, default=False)
+    default_loader_id: str = Column(String, name="default_loader", nullable=True, default=EZPluginLoader.info.id)
 
     __ez_id_column__ = package_name
 

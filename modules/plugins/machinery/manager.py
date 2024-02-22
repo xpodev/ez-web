@@ -167,8 +167,11 @@ class PluginManager:
     def disable(self, plugin_id: PluginId):
         ...
 
-    def load_plugin(self, plugin_id: PluginId):
-        loader = self._default_plugin_loader
+    def load_plugin(self, plugin_id: PluginId, loader_id: PluginLoaderId = None):
+        if loader_id is None:
+            loader = self._default_plugin_loader
+        else:
+            loader = self.get_loader(loader_id)
 
         try:
             plugin = self.get_plugin(plugin_id)
@@ -186,10 +189,15 @@ class PluginManager:
         
         return plugin
 
-    def load_plugins(self, *plugin_ids: PluginId):
-        for plugin_id in plugin_ids:
-            self._current_plugin = plugin_id
-            self.load_plugin(plugin_id)
+    def load_plugins(self, *plugin_ids: PluginId, loader: Callable[[PluginId], PluginLoaderId | None] | PluginLoaderId = None):
+        if callable(loader):
+            for plugin_id in plugin_ids:
+                self._current_plugin = plugin_id
+                self.load_plugin(plugin_id, loader(plugin_id))
+        else:
+            for plugin_id in plugin_ids:
+                self._current_plugin = plugin_id
+                self.load_plugin(plugin_id, loader)
 
     def run_plugins(self, *plugin_ids: PluginId):
         if not plugin_ids:
