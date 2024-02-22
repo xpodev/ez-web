@@ -1,10 +1,10 @@
 from functools import wraps
 import ez
-from jsx.styling import Style
 
 from .dbi import PAGE_REPOSITORY, PageInfoModel
 from ez.database import engine
 
+from jsx.styling import Style
 from jsx.html import *
 
 import ez.templates
