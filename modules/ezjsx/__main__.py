@@ -1,12 +1,15 @@
 import ez
 
-from jsx.server import mount
+from jsx.server import JSXServer
 from jsx.renderer import render
 from jsx.components import Component
 from jsx.html import Element
 from ez.events import HTTP
 from .events import TreeRenderer
 from . import components
+
+
+jsx_server = JSXServer()
 
 
 @ez.on(HTTP.Out)
@@ -25,13 +28,8 @@ def render_tree(_):
         ez.response.html(result)
 
 
-mount(ez._app)
+jsx_server.mount(ez._app)
 
 ez.extend_ez(components, "jsx")
 
 __module_name__ = "EZ JSX Integration"
-__version__ = "1.0.0"
-__doc__ = \
-"""
-This module enables the jsx library for use in EZ Web Framework.
-"""
