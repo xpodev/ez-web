@@ -1,6 +1,7 @@
 import ez
 
 from . import router
+
 del router
 
 from .builtins.dbi import PLUGIN_REPOSITORY
@@ -13,12 +14,16 @@ PLUGIN_REPOSITORY.connect(engine)
 
 
 def load_plugins():
-    plugins = [plugin.package_name for plugin in PLUGIN_REPOSITORY.all()]
+    plugins = PLUGIN_REPOSITORY.all()
+    plugin_ids = [plugin.package_name for plugin in plugins]
 
     ez.emit(Plugins.WillLoad, plugins)
 
-    PLUGIN_MANAGER.load_plugins(*plugins)
-    PLUGIN_MANAGER.run_plugins(*plugins)
+    PLUGIN_MANAGER.load_plugins(
+        *plugin_ids,
+        loader=lambda plugin: PLUGIN_REPOSITORY.get(plugin).default_loader_id
+    )
+    PLUGIN_MANAGER.run_plugins(*plugin_ids)
 
     ez.emit(Plugins.DidLoad, plugins)
 

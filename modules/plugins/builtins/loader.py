@@ -11,7 +11,6 @@ from ..machinery.loader import IPluginLoader, PluginLoaderInfo
 from .plugin import EZPlugin
 from .plugin_module_loader import PluginModuleLoader
 from .plugin_module import PluginModule
-from .dbi import PLUGIN_REPOSITORY
 
 
 class EZPluginLoader(IPluginLoader):
@@ -46,6 +45,8 @@ class EZPluginLoader(IPluginLoader):
             plugin.module = self._load_module(plugin.info.package_name)
 
     def _load_plugin(self, plugin_id: PluginId) -> EZPlugin:
+        from .dbi import PLUGIN_REPOSITORY
+
         module = self._load_module(plugin_id)
         sys.modules[module.__name__] = module
 
