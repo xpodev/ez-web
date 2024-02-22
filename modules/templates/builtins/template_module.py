@@ -5,7 +5,7 @@ from ..types import RenderResult
 
 
 class TemplateModule(ModuleType):
-    render: Callable[..., RenderResult]
+    render: Callable[..., RenderResult] | None
 
     def __init__(self, name: str, doc: str | None = ...) -> None:
         super().__init__(name, doc)

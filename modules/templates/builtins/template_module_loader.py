@@ -18,7 +18,4 @@ class TemplateModuleLoader(Loader):
             exec(bytecode, vars(module))
 
         if not hasattr(module, "render"):
-            raise ImportError(f"Module {module} missing 'render' function")
-
-        if not callable(module.render):
-            raise ImportError(f"'{module}.render' is not a function")
+            module.render = None
