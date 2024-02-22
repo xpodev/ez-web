@@ -99,6 +99,10 @@ class EZTemplateLoader(ITemplatePackLoader):
                     pack.add(pk)
             elif item.suffix == ".py":
                 template = self._load_template(item, name)
+
+                if template.render is None:
+                    continue
+
                 pack.add(template)
 
     def _load_template(self, path: Path, name: str):
