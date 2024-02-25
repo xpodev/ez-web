@@ -1,6 +1,7 @@
 import ez
 
 from .manager import TEMPLATE_MANAGER
+from . import router
 
 
 def load_template_packs():
