@@ -9,14 +9,11 @@ from jsx.html import *
 import ez.templates
 
 
-template_manager = ez.templates.get_template_manager()
-
-
 def make_page_route(page: PageInfoModel):
     if not page.slug.startswith("/"):
         page.slug = f"/{page.slug}"
 
-    render = template_manager.get(page.template_name).render
+    render = ez.templates.get(page.template_name).render
 
     @wraps(render)
     def page_route(*args, **kwargs):
