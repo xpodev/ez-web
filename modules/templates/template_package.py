@@ -19,3 +19,6 @@ class TemplatePackage:
     @property
     def loader_name(self) -> str:
         return self._loader_name
+    
+    def __iter__(self):
+        return iter(self._pack)
