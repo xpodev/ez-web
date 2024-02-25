@@ -29,11 +29,18 @@ parser.add_argument(
     help="The directory to serve",
 )
 
+parser.add_argument(
+    "--reload-include",
+    nargs="+",
+    help="Additional directories to watch for changes",
+)
+
 
 class Args:
     host: str
     port: int
     sitedir: Path
+    reload_include: list[str]
 
 
 import sys

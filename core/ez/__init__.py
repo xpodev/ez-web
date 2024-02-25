@@ -405,9 +405,6 @@ def add_router(route: str, router, __ez=_EZ.ez):
 
 
 def _setup(__ez=_EZ.ez):
-    if hasattr(__ez.app, "setup"):
-        __ez.app.setup()
-
     import sys
 
     sys.path.append(str(MODULE_DIR))
