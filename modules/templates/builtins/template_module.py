@@ -7,8 +7,9 @@ from ..types import RenderResult
 class TemplateModule(ModuleType):
     render: Callable[..., RenderResult] | None
 
-    def __init__(self, name: str, doc: str | None = ...) -> None:
+    def __init__(self, name: str, doc: str | None = "") -> None:
         super().__init__(name, doc)
+        self.render = None
 
     def __str__(self) -> str:
         return f"<TemplateModule {self.__name__}>"
