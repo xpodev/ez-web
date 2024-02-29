@@ -48,7 +48,7 @@ def template(name: str):
     current_pack = _try_get_current_pack()
     if current_pack is None:
         raise TypeError(
-            f"Current template pack loader does not support adding templates."
+            "Current template pack loader does not support adding templates."
         )
 
     @overload
