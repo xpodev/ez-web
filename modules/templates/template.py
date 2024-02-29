@@ -1,3 +1,4 @@
+from functools import wraps
 from typing import Callable, TypeVar, ParamSpec, Generic, overload, TYPE_CHECKING
 
 from .types import RenderResult
@@ -63,13 +64,14 @@ def template(name: str):
                 raise TypeError(
                     f"Class '{cls.__name__}' must implement a 'render' method to be a valid template."
                 )
-
+            
             class _(Template):
                 def __init__(self):
                     super().__init__(name, None)
 
+                @wraps(cls.render)
                 def render(self, *args, **kwargs) -> RenderResult:
-                    return cls(*args, **kwargs).render()
+                    return cls.render(cls(), *args, **kwargs)
 
             current_pack.add(type(cls.__name__, (_,), {})())
             return cls
