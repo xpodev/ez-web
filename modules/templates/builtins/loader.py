@@ -1,5 +1,6 @@
 import yaml
 
+from contextlib import contextmanager
 from pathlib import Path
 from importlib.util import spec_from_file_location, module_from_spec
 
@@ -46,6 +47,15 @@ class EZTemplateLoader(ITemplatePackLoader):
     @property
     def current_pack(self) -> TemplatePack | None:
         return self._current_pack
+    
+    @contextmanager
+    def pack(self, pack: TemplatePack | None):
+        pack, self._current_pack = self._current_pack, pack
+        try:
+            assert self.current_pack is not None
+            yield self.current_pack
+        finally:
+            self._current_pack = pack
 
     def load(self, package_name: str) -> TemplatePackage | None:
         path = self.template_dir / package_name
@@ -76,17 +86,16 @@ class EZTemplateLoader(ITemplatePackLoader):
         else:
             mapping = {}
 
-        self._load_templates(
-            (path / package.info.root).resolve(), mapping, package.pack
-        )
+        with self.pack(package.pack):
+            self._load_templates(
+                (path / package.info.root).resolve(), mapping, package.pack
+            )
 
-        self._current_pack = self._current_package = None
+        self._current_package = None
 
         return package
 
     def _load_templates(self, path: Path, mapping: dict[Path, str], pack: TemplatePack):
-        self._current_pack = pack
-
         if not path.is_dir():
             return
 
@@ -95,7 +104,8 @@ class EZTemplateLoader(ITemplatePackLoader):
             if item.name.startswith("_"):
                 continue
             elif item.is_dir():
-                self._load_templates(item, mapping, pk := TemplatePack(name, pack))
+                with self.pack(TemplatePack(name, pack)) as pk:
+                    self._load_templates(item, mapping, pk)
                 if pk.items:
                     pack.add(pk)
             elif item.suffix == ".py":
@@ -110,9 +120,13 @@ class EZTemplateLoader(ITemplatePackLoader):
         module = self._load_template_module(path)
         return EZTemplate(name, module)
 
-    def _load_template_module(self, path: Path):
+    def _load_template_module(self, path: Path) -> TemplateModule:
         spec = spec_from_file_location(path.stem, path, loader=self._loader)
+        if spec is None:
+            raise ImportError(f"Could not load module from {path}")
         module = module_from_spec(spec)
+        assert spec.loader is not None
         spec.loader.exec_module(module)
 
+        assert isinstance(module, TemplateModule)
         return module
