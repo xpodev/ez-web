@@ -21,8 +21,8 @@ def make_page_route(page: PageInfoModel):
     for param in signature.parameters.values():
         annotation = param.annotation
         if annotation is inspect.Parameter.empty:
-            continue
-        if isinstance(annotation, type) and issubclass(annotation, ez.templates.PageData):
+            parameters.append(param)
+        elif isinstance(annotation, type) and issubclass(annotation, ez.templates.PageData):
             if param.kind in { param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY }:
                 inject_kwargs[param.name] = ez.templates.PageData(
                     id=page.id,
