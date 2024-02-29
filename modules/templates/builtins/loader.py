@@ -3,12 +3,13 @@ import yaml
 from pathlib import Path
 from importlib.util import spec_from_file_location, module_from_spec
 
+from .template_module import TemplateModule
+from .template_module_loader import TemplateModuleLoader
+from .ez_template import EZTemplate
+
 from ..template_pack import TemplatePack
 from ..template_package_info import TemplatePackageInfo, TemplateMappingInfo
 from ..machinery.loader import ITemplatePackLoader, TemplatePackage
-
-from .ez_template import EZTemplate
-from .template_module_loader import TemplateModuleLoader
 
 
 def create_mapping(info: TemplateMappingInfo, path: Path) -> dict[Path, str]:
