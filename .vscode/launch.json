@@ -11,11 +11,16 @@
             "python": "${workspaceFolder}/lib/python/python.exe",
             "program": "${workspaceFolder}/core/main.py",
             "console": "integratedTerminal",
-            "cwd": "D:\\tests\\sample_site",
+            "cwd": "C:\\Users\\ee102\\Documents\\ez-web-test-site",
             "args": [
                 ".",
                 "--port",
-                "3742"
+                "8000",
+                "--host",
+                "0.0.0.0",
+                "--reload-includes",
+                ".",
+                "../ez-web",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/lib/python;${workspaceFolder}/core;./lib/dependencies",

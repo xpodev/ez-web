@@ -14,8 +14,8 @@ if __name__ == "__main__":
         "main:app",
         host=args.host,
         port=args.port,
-        reload=os.environ.get("ENV", "").lower() == "development",
+        reload=True,
         log_level="debug",
         factory=True,
-        reload_includes=args.reload_include,
+        reload_includes=args.reload_includes,
     )

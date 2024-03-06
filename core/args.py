@@ -30,9 +30,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--reload-include",
+    "--reload-includes",
     nargs="+",
-    help="Additional directories to watch for changes",
+    help="The directories to watch for changes",
 )
 
 
@@ -40,7 +40,7 @@ class Args:
     host: str
     port: int
     sitedir: Path
-    reload_include: list[str]
+    reload_includes: list[str]
 
 
 import sys
