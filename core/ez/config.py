@@ -22,9 +22,6 @@ class Config:
 
         self._load_database_config()
 
-    def __getattr__(self, name):
-        return self.config[name]
-
     def _load_database_config(self):
         if "database" not in self.config:
             raise KeyError("Database configuration not found in config file.")
