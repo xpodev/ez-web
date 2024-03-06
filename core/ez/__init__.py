@@ -1,8 +1,4 @@
-from dotenv import load_dotenv
-
-load_dotenv(dotenv_path=".env")
-del load_dotenv
-
+from .config import config
 
 from args import args, unparsed_args
 
@@ -481,6 +477,7 @@ __all__ = [
     "once",
     "emit",
     "run",
+    "config",
 ]
 
 
