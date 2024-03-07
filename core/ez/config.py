@@ -4,6 +4,9 @@ from pathlib import Path
 import yaml
 
 
+SITE_CONFIG_FILENAME = "site.yaml"
+
+
 class Config:
     def __init__(self, config_file):
         self.config_file = Path(config_file)
@@ -14,10 +17,10 @@ class Config:
 
     def reload(self):
         if hasattr(self, "config"):
-            for key in list(self.env):
+            for key in list(self.config.env):
                 os.environ.pop(key, None)
         self.config = yaml.safe_load(open(self.config_file))
-        for key, value in self.env.items():
+        for key, value in self.config.env.items():
             os.environ[key] = value
 
         self._load_database_config()
@@ -66,13 +69,13 @@ class DatabaseConfig:
             username=username,
             password=password,
             host=host,
-            port=port,
+            port=int(port),
             database=database,
             **config,
         )
 
 
-config = Config("site.yaml")
+config = Config(SITE_CONFIG_FILENAME)
 
 del yaml
 del Config
