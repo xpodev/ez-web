@@ -4,6 +4,9 @@ from pathlib import Path
 import yaml
 
 
+SITE_CONFIG_FILENAME = "site.yaml"
+
+
 class Config:
     def __init__(self, config_file):
         self.config_file = Path(config_file)
@@ -72,7 +75,7 @@ class DatabaseConfig:
         )
 
 
-config = Config("site.yaml")
+config = Config(SITE_CONFIG_FILENAME)
 
 del yaml
 del Config
