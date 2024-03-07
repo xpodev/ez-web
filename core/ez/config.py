@@ -69,7 +69,7 @@ class DatabaseConfig:
             username=username,
             password=password,
             host=host,
-            port=port,
+            port=int(port),
             database=database,
             **config,
         )
