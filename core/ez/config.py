@@ -17,10 +17,10 @@ class Config:
 
     def reload(self):
         if hasattr(self, "config"):
-            for key in list(self.env):
+            for key in list(self.config.env):
                 os.environ.pop(key, None)
         self.config = yaml.safe_load(open(self.config_file))
-        for key, value in self.env.items():
+        for key, value in self.config.env.items():
             os.environ[key] = value
 
         self._load_database_config()
