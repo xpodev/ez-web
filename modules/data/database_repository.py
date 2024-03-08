@@ -41,6 +41,9 @@ class DatabaseRepository(Repository[T]):
     def all(self, limit: int = None, skip: int = None):
         return self._session.query(self._model).limit(limit).offset(skip).all()
 
+    def query(self):
+        return self._session.query(self._model)
+
     def _get(self, key: str, **kwargs) -> Column:
         if kwargs:
             raise ValueError("kwargs are not supported by DatabaseRepository")
@@ -50,6 +53,27 @@ class DatabaseRepository(Repository[T]):
             select(self._model).where(self._model.__ez_id_column__ == key)
         ).one()
 
+    def set(self, value: T) -> None:
+        if not self.cache_enabled:
+            return self._set(value)
+        self._cache.cache(value)
+        self._set(value)
+
+    def _set(self, value: T) -> None:
+        if (
+            self._id_of(value) is None
+            or self._session.get(self._model, self._id_of(value)) is None
+        ):
+            self._session.add(value)
+        else:
+            self._session.merge(value)
+
+        self._session.commit()
+        self._session.refresh(value)
+
     @classmethod
     def create_type(cls, model: type[T]) -> "type[DatabaseRepository[T]]":
         return lambda *args, **kwargs: cls(model, *args, **kwargs)
+
+    def _id_of(self, value: T):
+        return getattr(value, self._model.__ez_id_column__.name)

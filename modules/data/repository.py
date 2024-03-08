@@ -33,3 +33,12 @@ class Repository(Generic[T]):
     
     def _get(self, key: CacheId, **kwargs) -> T:
         raise NotImplementedError
+    
+    def set(self, key: CacheId, value: T) -> None:
+        if not self.cache_enabled:
+            return self._set(key, value)
+        self._cache.cache(key, value)
+        self._set(key, value)
+
+    def _set(self, key: CacheId, value: T) -> None:
+        raise NotImplementedError

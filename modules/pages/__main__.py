@@ -4,7 +4,7 @@ import ez
 
 from ez.database import engine
 
-from .dbi import PAGE_REPOSITORY, PageInfoModel
+from .dbi import PAGE_REPOSITORY, PageInfoModel, PAGES_HISTORY_REPOSITORY
 from .router import pages_api_router
 
 
@@ -12,10 +12,10 @@ from jsx.html import *
 
 import ez.templates
 
-
 def make_page_route(page: PageInfoModel):
     if not page.slug.startswith("/"):
         page.slug = f"/{page.slug}"
+
 
     template = ez.templates.get(page.template_name)
     signature = inspect.signature(template.render)
@@ -53,6 +53,7 @@ def make_page_route(page: PageInfoModel):
 
 def setup():
     PAGE_REPOSITORY.connect(engine)
+    PAGES_HISTORY_REPOSITORY.connect(engine)
 
     pages = PAGE_REPOSITORY.all()
     for page in pages:
