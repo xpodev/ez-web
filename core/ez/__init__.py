@@ -1,5 +1,3 @@
-from .config import config
-
 from args import args, unparsed_args
 
 
@@ -31,6 +29,8 @@ PLUGIN_API_DIR: Path = SITE_DIR / "lib" / "public-api" / "plugins"
 import sys
 
 sys.path.append(str(MODULE_DIR))
+
+from .config import config
 
 import log
 
