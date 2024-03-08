@@ -59,11 +59,11 @@ class DatabaseConfig:
     @staticmethod
     def from_uri(uri: str, **config):
         driver, uri = uri.split("://")
-        username, uri = uri.split(":")
-        password, uri = uri.split("@")
-        host, uri = uri.split(":")
+        username, uri = uri.split(":", maxsplit=1)
+        password, uri = uri.split("@", maxsplit=1)
+        host, uri = uri.split(":", maxsplit=1)
         port, uri = uri.split("/")
-        database, uri = uri.split("?")
+        database, uri, *_ = uri.split("?"), ""
         return DatabaseConfig(
             driver=driver,
             username=username,
