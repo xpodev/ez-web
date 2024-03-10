@@ -4,6 +4,9 @@ from pathlib import Path
 import yaml
 
 
+from utilities.uri import UnifiedResourceIdentifier
+
+
 SITE_CONFIG_FILENAME = "site.yaml"
 
 
@@ -29,7 +32,7 @@ class Config:
         if "database" not in self.config:
             raise KeyError("Database configuration not found in config file.")
 
-        database_config = self.config["database"][0]
+        database_config = self.config["database"]
         if "uri" in database_config:
             return DatabaseConfig.from_uri(**database_config)
 
@@ -52,25 +55,22 @@ class DatabaseConfig:
         return (
             f"{self.driver}://"
             + f"{self.username}:{self.password}@"
-            + f"{self.host}:{self.port}/"
+            + f"{self.host}:{self.port}"
             + f"{self.database}"
         )
 
     @staticmethod
     def from_uri(uri: str, **config):
-        driver, uri = uri.split("://")
-        username, uri = uri.split(":")
-        password, uri = uri.split("@")
-        host, uri = uri.split(":")
-        port, uri = uri.split("/")
-        database, uri = uri.split("?")
+        _uri = UnifiedResourceIdentifier.safe_parse(uri)
+        if _uri.authority is None:
+            raise ValueError(f"DB URI must provide host information")
         return DatabaseConfig(
-            driver=driver,
-            username=username,
-            password=password,
-            host=host,
-            port=int(port),
-            database=database,
+            driver=_uri.scheme,
+            username=_uri.authority.userinfo.username,
+            password=_uri.authority.userinfo.password,
+            host=_uri.authority.host,
+            port=_uri.authority.port,
+            database=_uri.path,
             **config,
         )
 
