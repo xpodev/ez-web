@@ -21,3 +21,13 @@ ez.SITE_DIR = args.args.sitedir
 #endregion
 
 
+#region Startup Scripts
+
+
+from ..scripts import start_site
+
+
+start_site.main()
+
+
+#endregion
