@@ -1,12 +1,12 @@
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 from . import session
-from ez.config import config
+from ez.site import CONFIG
 
 
 class Model(DeclarativeBase):
     @declared_attr
     def __tablename__(cls):
-        return config.database.prefix + (
+        return CONFIG.database.prefix + (
             cls.__table_name__
             if hasattr(cls, "__table_name__")
             else cls.__name__.removesuffix("Model").lower() + "s"
