@@ -4,6 +4,8 @@ from utilities.event import Event
 
 
 class EventHandler:
+    __slots__ = ("key", "handler", "priority")
+
     def __init__(self, key: Any, handler: Callable, priority: int = 0) -> None:
         self.key = key
         self.handler = handler
@@ -90,4 +92,3 @@ class EventEmitter:
             listener(*args, **kwargs)
         
         return True
-        
