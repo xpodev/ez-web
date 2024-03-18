@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Boolean, Integer
 
-from data.database import *
+from ez.data.database import *
 
 from .installer import EZPluginInstaller
 from .loader import EZPluginLoader
