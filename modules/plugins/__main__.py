@@ -5,10 +5,6 @@ import ez.log
 ez.log.info("Plugin Manager loaded")
 
 
-# from . import router
-
-# del router
-
 from .builtins.dbi import PLUGIN_REPOSITORY
 from ez.plugins.events import Plugins
 
