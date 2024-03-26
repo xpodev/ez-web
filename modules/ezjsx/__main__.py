@@ -1,4 +1,5 @@
 import ez
+import ez.lowlevel
 
 from jsx.server import JSXServer
 from jsx.renderer import render
@@ -6,13 +7,12 @@ from jsx.components import Component
 from jsx.html import Element
 from ez.events import HTTP
 from .events import TreeRenderer
-from . import components
 
 
 jsx_server = JSXServer()
 
 
-@ez.on(HTTP.Out)
+@ez.events.on(HTTP.Out)
 def render_tree(_):
     if ez.request.method != "GET":
         return
@@ -22,14 +22,12 @@ def render_tree(_):
         if not isinstance(body, components.Page):
             body = components.Page(body)
 
-        ez.emit(TreeRenderer.WillRender, body)
+        ez.events.emit(TreeRenderer.WillRender, body)
         result = render(body)
-        ez.emit(TreeRenderer.DidRender, body, result)
+        ez.events.emit(TreeRenderer.DidRender, body, result)
         ez.response.html(result)
 
 
-jsx_server.mount(ez._app)
-
-ez.extend_ez(components, "jsx")
+jsx_server.mount(ez.lowlevel.WEB_APP)
 
 __module_name__ = "EZ JSX Integration"

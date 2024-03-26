@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TypeAlias, TYPE_CHECKING
 
 from .plugin_info import PluginInfo, PluginId
@@ -18,8 +18,12 @@ PluginAPI: TypeAlias = object
 class Plugin:
     info: PluginInfo
     loader: "PluginLoaderInfo"
-    enabled: bool
+    _enabled: bool
     api: PluginAPI | None
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
 
 
 __all__ = [

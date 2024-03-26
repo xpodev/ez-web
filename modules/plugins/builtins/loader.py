@@ -33,16 +33,16 @@ class EZPluginLoader(IPluginLoader):
         root = sys.modules[self.EZ_PLUGIN_PREFIX] = PluginModule(self.EZ_PLUGIN_PREFIX)
         root.__path__ = [str(self.plugin_dir)]
 
-    def load(self, plugin_id: PluginId, plugin: Plugin) -> EZPlugin | None:
+    def load(self, plugin_id: PluginId, plugin: Plugin | None) -> EZPlugin | None:
         if plugin is None:
             return self._load_plugin(plugin_id)
         plugin = self._assert_ez_plugin(plugin)
         if plugin.is_loaded:
             if plugin.enabled:
                 return None
-            self._reload_plugin(plugin)
-        else:
-            plugin.module = self._load_module(plugin.info.package_name)
+            return self._reload_plugin(plugin)
+        plugin.module = self._load_module(plugin.info.package_name)
+        return plugin
 
     def _load_plugin(self, plugin_id: PluginId) -> EZPlugin:
         from .dbi import PLUGIN_REPOSITORY
@@ -63,13 +63,12 @@ class EZPluginLoader(IPluginLoader):
         )
 
         module.__info__ = info
-        module.__loader__ = self.info.id
         module.__path__.append(str(plugin_dir))
 
         ez_plugin = EZPlugin(
             info=info,
             loader=self.info,
-            enabled=info_model.enabled,
+            _enabled=info_model.enabled,
             api=None,
             module=module
         )
@@ -93,13 +92,18 @@ class EZPluginLoader(IPluginLoader):
     def _load_module(self, plugin_id: PluginId) -> PluginModule:
         path = self._get_plugin_path(plugin_id)
         spec = spec_from_file_location(self.get_module_full_name(plugin_id), str(path), loader=self._loader)
+        assert spec is not None
         module = module_from_spec(spec)
+        assert isinstance(module, PluginModule)
         return module
     
     def _execute_module(self, module: ModuleType) -> None:
+        assert module.__spec__ is not None
+        assert module.__spec__.loader is not None
         module.__spec__.loader.exec_module(module)
 
     def _reload_plugin(self, plugin: EZPlugin) -> None:
+        assert plugin.module is not None
         self._execute_module(plugin.module)
 
     def _get_plugin_path(self, plugin_id: PluginId):

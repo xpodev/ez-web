@@ -7,8 +7,11 @@ from ez.database import engine
 from .dbi import PAGE_REPOSITORY, PageInfoModel, PAGES_HISTORY_REPOSITORY
 from .router import pages_api_router
 
+from fastapi.responses import HTMLResponse
+
 
 from jsx.html import *
+from jsx.renderer import render
 
 import ez.templates
 
@@ -44,11 +47,11 @@ def make_page_route(page: PageInfoModel):
     new_signature = signature.replace(parameters=parameters)
 
     def page_route(*args, **kwargs):
-        return template.render(*args, **inject_kwargs, **kwargs)
+        return HTMLResponse(render(template.render(*args, **inject_kwargs, **kwargs)))
     
     page_route.__signature__ = new_signature
 
-    ez.get(page.slug)(page_route)
+    ez.site.get(page.slug)(page_route)
 
 
 def setup():
@@ -66,5 +69,5 @@ def main():
 
 main()
 
-ez.add_router("/api/pages", pages_api_router)
+ez.site.add_router("/api/pages", pages_api_router)
 

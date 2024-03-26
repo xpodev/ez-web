@@ -1,25 +1,28 @@
 from fastapi.exceptions import HTTPException
 import ez
-from . import ez_templates as api
 
+from .errors import TemplateNotFoundError
+from .template import Template
+from .template_pack import TemplatePack
+from .manager import TEMPLATE_MANAGER
 
-def to_json(item: api.Template | api.TemplatePack) -> dict:
+def to_json(item: Template | TemplatePack) -> dict:
     return {
         "name": item.name,
-        "type": "template" if isinstance(item, api.Template) else "pack",
+        "type": "template" if isinstance(item, Template) else "pack",
         **({
             "items": [
                 to_json(sub_item) for sub_item in item
             ]
-        } if isinstance(item, api.TemplatePack) else {})
+        } if isinstance(item, TemplatePack) else {})
     }
 
 
-router = ez.router()
+router = ez.site.router()
 
 
 @router.get("")
-def get_templates():
+def get_templates() -> dict:
     return {
         "packages": [
             {
@@ -27,18 +30,18 @@ def get_templates():
                 "items": [
                     to_json(item) for item in package
                 ]
-            } for package in api.get_packages()
+            } for package in TEMPLATE_MANAGER.get_packages()
         ]
     }
 
 
 @router.get("/{name:path}")
-def get_template(name: str):
+def get_template(name: str) -> dict:
     try:
-        item = api.get(name)
-    except api.TemplateNotFoundError as exc:
+        item = TEMPLATE_MANAGER.get(name)
+    except TemplateNotFoundError as exc:
         raise HTTPException(404, str(exc))
     return to_json(item)
 
 
-ez.add_router("/api/templates", router)
+ez.site.add_router("/api/templates", router)

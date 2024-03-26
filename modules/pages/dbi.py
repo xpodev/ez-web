@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime
 
-from data.database import DatabaseModel, DatabaseRepository
+from ez.data.database import DatabaseModel, DatabaseRepository
 
 
 class PageInfoModel(DatabaseModel):
