@@ -26,14 +26,7 @@ class EZApplication(Application):
         self.web_app = self.app_host.create_application(EZWebApplication)
         self.event_system = self.app_host.create_application(EventEmitter)
 
-        module_manager_config = ModuleManagerConfig(exclude=[
-            "data",
-            # "ezjsx",
-            "modules",
-            # "pages",
-            # "plugins",
-            # "templates",
-        ])
+        module_manager_config = ModuleManagerConfig()
         self.module_manager = self.app_host.create_application(
             ModuleManager, 
             module_manager_config,

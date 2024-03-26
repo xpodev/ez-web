@@ -14,5 +14,3 @@ def main():
     ez_init.app.run()
 
     import ez.events as _
-    # import ez.log as _
-    

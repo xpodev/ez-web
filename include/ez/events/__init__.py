@@ -3,8 +3,6 @@ from utilities.event import Event
 from .settings import Settings
 from web.events import HTTP
 from web.app.events import App
-# from plugins.events import Plugins
-# from ezjsx.events import TreeRenderer
 
 import ez.lowlevel
 
@@ -33,7 +31,6 @@ __all__ = [
     "Event",
     "HTTP",
     "App",
-    # "Plugins",
     "Settings",
     "TreeRenderer"
 ]
