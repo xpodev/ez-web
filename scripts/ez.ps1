@@ -6,7 +6,7 @@ param (
 )
 
 $siteDir = Resolve-Path $siteDir
-$root = "D:\xpodev\ez-web-src"
+$root = Resolve-Path "$PSScriptRoot/.."
 $pythonPath = Join-Path $root "lib/python/python.exe"
 
 function RunCommand {
@@ -23,7 +23,7 @@ function CommandStart {
 
   $env:PYTHONPATH = "$root/include;$siteDir/lib/dependencies;"
 
-  $command = "$root/lib/python/python.exe -m core.startup $siteDir --port $port --host $hostname"
+  $command = "$root/lib/python/python.exe -m core.startup $siteDir --port $port --host $hostname --reload-includes $siteDir"
   RunCommand $command
 }
 
