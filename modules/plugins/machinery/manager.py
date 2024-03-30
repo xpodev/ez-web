@@ -2,6 +2,12 @@ from typing import Callable
 from types import ModuleType
 from pathlib import Path
 
+from sandbox.applications import Application
+from sandbox.host import AppHost, AppHostPermission
+from sandbox.security import PermissionSet
+
+from .app import PluginApplication
+
 from ..machinery.installer import PluginInstallerId
 from ..machinery.loader import PluginLoaderId
 
@@ -24,16 +30,29 @@ from ..machinery.loader import IPluginLoader
 from ..config import PLUGINS_PUBLIC_API_MODULE_NAME
 
 
-class PluginManager:
+class PluginManager(Application):
     EZ_PLUGIN_PREFIX = "ez.current-site.plugins"
 
     def __init__(
             self, 
+            host: AppHost,
+            oid: str,
             plugin_dir: str, 
             default_installer: Callable[[str], IPluginInstaller] | IPluginInstaller,
             default_loader: Callable[[str], IPluginLoader] | IPluginLoader,
             public_api: ModuleType | None = None
             ) -> None:
+        super().__init__(
+            oid, 
+            PermissionSet(
+                AppHostPermission.CreateApplications | 
+                AppHostPermission.ManageApplications |
+                AppHostPermission.RegisterEvents |
+                AppHostPermission.InvokeEvents
+            )
+        )
+        self.app_host = host
+
         self.plugin_dir = Path(plugin_dir)
         self._plugins: dict[PluginId, Plugin] = {}
         self._plugin_installers: dict[PluginInstallerId, IPluginInstaller] = {}
@@ -44,7 +63,7 @@ class PluginManager:
 
         self._public_api = public_api or ModuleType(PLUGINS_PUBLIC_API_MODULE_NAME)
 
-        self._current_plugin: PluginId = None
+        self._plugin_apps: dict[PluginId, PluginApplication] = {}
 
     #region Plugin Public API
 
@@ -52,13 +71,13 @@ class PluginManager:
     def public_api(self):
         return self._public_api
     
-    def enable_public_api(self, alias: str = None):
+    def enable_public_api(self, alias: str | None = None):
         alias = alias or PLUGINS_PUBLIC_API_MODULE_NAME
 
         import sys
 
         sys.modules[alias] = self._public_api
-        self._public_api.__ez_name__ = alias
+        setattr(self._public_api, "__ez_name__", alias)
 
     def disable_public_api(self):
         import sys
@@ -91,15 +110,15 @@ class PluginManager:
     
     def add_installer(self, installer: IPluginInstaller | Callable[[str], IPluginInstaller]) -> IPluginInstaller:
         if not isinstance(installer, IPluginInstaller):
-            installer = installer(self.plugin_dir)
+            installer = installer(str(self.plugin_dir))
         if installer.info.id in self._plugin_installers:
             raise DuplicateIDError(installer, installer.info.id)
         self._plugin_installers[installer.info.id] = installer
         return installer
 
     def add_loader(self, loader: IPluginLoader | Callable[[str], IPluginLoader]) -> IPluginLoader:
-        if not isinstance(loader, IPluginInstaller):
-            loader = loader(self.plugin_dir)
+        if not isinstance(loader, IPluginLoader):
+            loader = loader(str(self.plugin_dir))
         if loader.info.id in self._plugin_loaders:
             raise DuplicateIDError(loader, loader.info.id)
         self._plugin_loaders[loader.info.id] = loader
@@ -141,7 +160,7 @@ class PluginManager:
 
     #region Installation
 
-    def install(self, path: str, *, installer: PluginInstallerId = None):
+    def install(self, path: str, *, installer: PluginInstallerId | None = None):
         if installer is None:
             _installer = self._default_plugin_installer
         else:
@@ -157,17 +176,24 @@ class PluginManager:
 
     #region Plugin Status
         
-    @property
-    def current_plugin(self):
-        return self._current_plugin
-        
     def enable(self, plugin_id: PluginId):
-        ...
+        plugin = self.get_plugin(plugin_id)
+        if plugin.enabled:
+            return
+        app = self._plugin_apps[plugin_id]
+        self.app_host.add_application(app)
+        self.load_plugin(plugin_id, plugin.loader.id)
+        plugin._enabled = True
+        self._run_main(plugin, self.get_loader(plugin.loader.id))
 
     def disable(self, plugin_id: PluginId):
-        ...
+        plugin = self.get_plugin(plugin_id)
+        if not plugin.enabled:
+            return
+        plugin._enabled = False
+        self.app_host.remove_application(self._plugin_apps[plugin_id])
 
-    def load_plugin(self, plugin_id: PluginId, loader_id: PluginLoaderId = None):
+    def load_plugin(self, plugin_id: PluginId, loader_id: PluginLoaderId | None = None):
         if loader_id is None:
             loader = self._default_plugin_loader
         else:
@@ -176,7 +202,7 @@ class PluginManager:
         try:
             plugin = self.get_plugin(plugin_id)
         except UnknownPluginError:
-            plugin = loader.load(plugin_id, None)
+            plugin = self._load_plugin(plugin_id, loader, None)
 
             if plugin is None:
                 raise TypeError(f"Plugin loader {loader.info.id} returned None for plugin {plugin_id}")
@@ -185,28 +211,41 @@ class PluginManager:
             if plugin.api is not None:
                 self.expose(plugin, plugin.api)
         else:
-            loader.load(plugin_id, plugin)
+            self._load_plugin(plugin_id, loader, plugin)
         
         return plugin
 
-    def load_plugins(self, *plugin_ids: PluginId, loader: Callable[[PluginId], PluginLoaderId | None] | PluginLoaderId = None):
+    def load_plugins(self, *plugin_ids: PluginId, loader: Callable[[PluginId], PluginLoaderId | None] | PluginLoaderId | None = None):
         if callable(loader):
             for plugin_id in plugin_ids:
-                self._current_plugin = plugin_id
                 self.load_plugin(plugin_id, loader(plugin_id))
         else:
             for plugin_id in plugin_ids:
-                self._current_plugin = plugin_id
                 self.load_plugin(plugin_id, loader)
 
     def run_plugins(self, *plugin_ids: PluginId):
         if not plugin_ids:
-            plugin_ids = self._plugins.keys()
+            plugin_ids = tuple(self._plugins.keys())
         for plugin_id in plugin_ids:
             plugin = self.get_plugin(plugin_id)
             loader = self.get_loader(plugin.loader.id)
-            self._current_plugin = plugin_id
-            loader.run_main(plugin)
+            self._run_main(plugin, loader)
+
+    def _load_plugin(self, plugin_id: PluginId, loader: IPluginLoader, *args, **kwargs):
+        try:
+            app = self._plugin_apps[plugin_id]
+        except KeyError:
+            app = self._plugin_apps[plugin_id] = self.app_host.create_application(
+                lambda _, oid: PluginApplication(oid, PermissionSet(AppHostPermission.InvokeEvents)), 
+                plugin_id
+            )
+        with self.app_host.application(app):
+            return loader.load(plugin_id, *args, **kwargs)
+        
+    def _run_main(self, plugin: Plugin, loader: IPluginLoader):
+        app = self._plugin_apps[plugin.info.package_name]
+        with self.app_host.application(app):
+            return loader.run_main(plugin)
 
     #endregion
 

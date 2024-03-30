@@ -1,7 +1,7 @@
 from json import dumps, loads
 from fastapi import Request
 import ez
-from ezjsx.components import page
+from ez.jsx import page
 from .dbi import (
     PAGE_REPOSITORY,
     PageInfoModel,
@@ -34,7 +34,7 @@ def page_history_result(page: PagesHistoryModel):
     }
 
 
-pages_api_router = ez.router()
+pages_api_router = ez.site.router()
 
 
 @pages_api_router.get("")
