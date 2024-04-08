@@ -2,7 +2,7 @@ import ez
 import ez.plugins
 
 
-@ez.get("/api/plugins")
+@ez.web.get("/api/plugins")
 def get_plugins():
     return [
         {

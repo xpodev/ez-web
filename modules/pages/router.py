@@ -1,7 +1,8 @@
 from json import dumps, loads
-from fastapi import Request
+from starlette.requests import Request
 import ez
 from ez.jsx import page
+import ez.web
 from .dbi import (
     PAGE_REPOSITORY,
     PageInfoModel,
@@ -34,10 +35,10 @@ def page_history_result(page: PagesHistoryModel):
     }
 
 
-pages_api_router = ez.site.router()
+pages_api_router = ez.web.router()
 
 
-@pages_api_router.get("")
+@pages_api_router.get("/")
 async def get_pages(content=True):
     allPages = PAGE_REPOSITORY.all()
     return [page_result(page, content) for page in allPages]
@@ -49,7 +50,7 @@ async def get_page(page_id: int):
     return page_result(page)
 
 
-@pages_api_router.post("")
+@pages_api_router.post("/")
 async def create_page(request: Request):
     page = PageInfoModel(**await request.json())
     PAGE_REPOSITORY.set(value=page)

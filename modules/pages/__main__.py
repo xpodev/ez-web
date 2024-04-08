@@ -51,7 +51,7 @@ def make_page_route(page: PageInfoModel):
     
     page_route.__signature__ = new_signature
 
-    ez.site.get(page.slug)(page_route)
+    ez.web.get(page.slug)(page_route)
 
 
 def setup():
@@ -69,5 +69,5 @@ def main():
 
 main()
 
-ez.site.add_router("/api/pages", pages_api_router)
+ez.web.add_router("/api/pages", pages_api_router)
 
