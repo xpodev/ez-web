@@ -23,7 +23,7 @@ function CommandStart {
 
   $env:PYTHONPATH = "$root/include;$siteDir/lib/dependencies;"
 
-  $command = "$root/lib/python/python.exe -m core.startup $siteDir --port $port --host $hostname --reload-includes $siteDir"
+  $command = "$root/lib/python/python.exe -m core.startup $siteDir --port $port --host $hostname --reload-includes $siteDir --reload-includes $root"
   RunCommand $command
 }
 
