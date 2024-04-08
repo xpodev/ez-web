@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         lowlevel,
         plugins,
         site,
+        web,
     )
 
 
@@ -41,4 +42,5 @@ __all__ = [
     "lowlevel",
     "plugins",
     "site",
+    "web",
 ]
