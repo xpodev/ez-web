@@ -4,8 +4,6 @@ from importlib.util import spec_from_file_location, module_from_spec
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from sandbox.applications import Application
-from sandbox.security import PermissionSet
 from utilities.dependency_graph import CircularDependencyException, DependencyGraph
 
 if TYPE_CHECKING:
@@ -17,14 +15,11 @@ from .config import Config
 from .module import Module
 
 
-class ModuleManager(Application):
+class ModuleManager:
     MODULE_PRIORITY_ATTRIBUTE = "__priority__"
     MODULE_DEPENDENCIES_ATTRIBUTE = "__deps__"
-    MODULE_APPLICATION_FACTORY_ATTRIBUTE = "__app_class__"
 
-    def __init__(self, app_host: "AppHost", config: Config, permissions: PermissionSet) -> None:
-        super().__init__("mm", permissions)
-
+    def __init__(self, app_host: "AppHost", config: Config) -> None:
         self.app_host = app_host
         self.config = config
         self.module_dir = ez.EZ_FRAMEWORK_DIR / config.module_directory_name
@@ -81,27 +76,21 @@ class ModuleManager(Application):
 
                 module_api = module_api_dir / module.name
 
-                module_app = self.app_host.create_application(
-                    module.application_factory or (lambda _, oid : Application(oid, PermissionSet())), 
-                    module.name
-                )
+                if module_api.exists() and module_api.is_dir():
+                    module_api_init = module_api / "__init__.py"
+                    if module_api_init.exists():
+                        spec = spec_from_file_location(
+                            self.get_module_full_name(module.name) + ".__api__", 
+                            module_api_init, 
+                            submodule_search_locations=[str(module_api)]
+                        )
+                        if spec is not None and spec.loader is not None:
+                            module_api_module = sys.modules[spec.name] = sys.modules[f"ez.{module.name}"] = module_from_spec(spec)
+                            setattr(ez, module.name, module_api_module)
+                            spec.loader.exec_module(module_api_module)
+                            del sys.modules[spec.name]
 
-                with self.app_host.application(module_app):
-                    if module_api.exists() and module_api.is_dir():
-                        module_api_init = module_api / "__init__.py"
-                        if module_api_init.exists():
-                            spec = spec_from_file_location(
-                                self.get_module_full_name(module.name) + ".__api__", 
-                                module_api_init, 
-                                submodule_search_locations=[str(module_api)]
-                            )
-                            if spec is not None and spec.loader is not None:
-                                module_api_module = sys.modules[spec.name] = sys.modules[f"ez.{module.name}"] = module_from_spec(spec)
-                                setattr(ez, module.name, module_api_module)
-                                spec.loader.exec_module(module_api_module)
-                                del sys.modules[spec.name]
-
-                    module.entry_point.__spec__.loader.exec_module(module.entry_point)
+                module.entry_point.__spec__.loader.exec_module(module.entry_point)
 
         return bool(self._modules)
 
@@ -126,12 +115,10 @@ class ModuleManager(Application):
             spec.loader.exec_module(module)
 
             priority = getattr(module, self.MODULE_PRIORITY_ATTRIBUTE, 0)
-            factory = getattr(module, self.MODULE_APPLICATION_FACTORY_ATTRIBUTE, None)
 
         else:
             module = None
             priority = 0
-            factory = None
         
         spec = spec_from_file_location(
             full_module_name + "." + self.config.module_entry_filename, 
@@ -145,7 +132,7 @@ class ModuleManager(Application):
         entry_point = module_from_spec(spec)
         sys.modules[spec.name] = entry_point
 
-        return Module(module_name, entry_point, dir_path, priority=priority, application_factory=factory)
+        return Module(module_name, entry_point, dir_path, priority=priority)
 
     def get_modules(self):
         return self._modules.copy()

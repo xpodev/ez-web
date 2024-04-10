@@ -1,6 +1,7 @@
 from contextlib import contextmanager
-from typing import Callable, Concatenate, ParamSpec, TypeVar
+from typing import Any, Callable, Concatenate, ParamSpec, TypeVar
 from sandbox.identity.oid_db import ObjectDatabase
+from sandbox.security.permission import PermissionSet
 from utilities.singleton import SingletonMeta
 
 from .context import Context
@@ -28,7 +29,9 @@ class AppHost(metaclass=AppHostMeta):
     _context: Context
     _db: ObjectDatabase
 
-    def __init__(self, context: Context | Application):
+    def __init__(self, context: Context | Application | Any):
+        if not isinstance(context, (Context, Application)):
+            context = Application("root", PermissionSet())
         if isinstance(context, Application):
             context = Context(context)
         self._context = context
@@ -100,15 +103,3 @@ class AppHost(metaclass=AppHostMeta):
             return
         for artifact in self._artifacts.pop(app, ()):
             artifact.remove()
-
-    @requires(AppHostPermission.RegisterEvents)
-    def register_event(self, event: Callable):
-        self._registered_events[event] = self.current_application
-
-    @requires(AppHostPermission.InvokeEvents)
-    def invoke(self, func: Callable, *args, **kwargs):
-        try:
-            with self._context.application(self._registered_events[func]):
-                return func(*args, **kwargs)
-        except KeyError:
-            return func(*args, **kwargs)

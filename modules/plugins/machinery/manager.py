@@ -30,27 +30,17 @@ from ..machinery.loader import IPluginLoader
 from ..config import PLUGINS_PUBLIC_API_MODULE_NAME
 
 
-class PluginManager(Application):
+class PluginManager:
     EZ_PLUGIN_PREFIX = "ez.current-site.plugins"
 
     def __init__(
             self, 
             host: AppHost,
-            oid: str,
             plugin_dir: str, 
             default_installer: Callable[[str], IPluginInstaller] | IPluginInstaller,
             default_loader: Callable[[str], IPluginLoader] | IPluginLoader,
             public_api: ModuleType | None = None
             ) -> None:
-        super().__init__(
-            oid, 
-            PermissionSet(
-                AppHostPermission.CreateApplications | 
-                AppHostPermission.ManageApplications |
-                AppHostPermission.RegisterEvents |
-                AppHostPermission.InvokeEvents
-            )
-        )
         self.app_host = host
 
         self.plugin_dir = Path(plugin_dir)
@@ -236,7 +226,7 @@ class PluginManager(Application):
             app = self._plugin_apps[plugin_id]
         except KeyError:
             app = self._plugin_apps[plugin_id] = self.app_host.create_application(
-                lambda _, oid: PluginApplication(oid, PermissionSet(AppHostPermission.InvokeEvents)), 
+                lambda _, oid: PluginApplication(oid, PermissionSet()), 
                 plugin_id
             )
         with self.app_host.application(app):

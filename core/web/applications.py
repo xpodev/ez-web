@@ -3,9 +3,6 @@ from typing import TYPE_CHECKING
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from sandbox.applications import Application
-from sandbox.security.permission import PermissionSet
-
 from .router import EZRouter
 
 if TYPE_CHECKING:
@@ -22,11 +19,10 @@ class EZMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
 
-class EZWebApplication(Application, Starlette):
+class EZWebApplication(Starlette):
     ez_router: EZRouter
 
     def __init__(self, app_host: "AppHost"):
-        super().__init__("web", PermissionSet())
         Starlette.__init__(self)
         self.app_host = app_host
         self._initialize()

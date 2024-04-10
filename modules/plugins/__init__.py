@@ -1,3 +1,5 @@
+import ez.lowlevel
+
 from .machinery.manager import PluginManager
 from .builtins.installer import EZPluginInstaller
 from .builtins.loader import EZPluginLoader
@@ -7,10 +9,9 @@ from .config import PLUGINS_DIRECTORY
 from . import manager
 
 
-def init_manager(host, oid):
+def init_manager(host):
     manager.PLUGIN_MANAGER = PluginManager(
         host, 
-        oid, 
         str(PLUGINS_DIRECTORY), 
         EZPluginInstaller, 
         EZPluginLoader
@@ -19,4 +20,4 @@ def init_manager(host, oid):
     return manager.PLUGIN_MANAGER
 
 
-__app_class__ = init_manager
+init_manager(ez.lowlevel.APP_HOST)
