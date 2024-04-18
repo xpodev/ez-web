@@ -1,5 +1,8 @@
 from enum import StrEnum
 from functools import wraps
+
+from utilities.utils import bind
+
 import ez.lowlevel as lowlevel
 
 
@@ -125,3 +128,11 @@ def options(route: str, **kwargs):
 
 def head(route: str, **kwargs):
     return _wrap_endpoint(route, methods=["HEAD"], **kwargs)
+
+
+@bind(methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE", "CONNECT"])
+def method_names(*, methods: list[str]):
+    def method_names():
+        return methods
+    return method_names
+
