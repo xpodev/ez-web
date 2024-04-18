@@ -1,6 +1,5 @@
 import sys
 
-from types import ModuleType
 from contextlib import contextmanager
 from importlib.util import spec_from_file_location, module_from_spec
 
