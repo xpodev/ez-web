@@ -1,0 +1,3 @@
+__deps__ = [
+    "templates"
+]

@@ -21,3 +21,7 @@ def init_manager(host):
 
 
 init_manager(ez.lowlevel.APP_HOST)
+
+__deps__ = [
+    "events"
+]
