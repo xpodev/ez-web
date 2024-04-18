@@ -1,6 +1,7 @@
 import sys
 
 from types import ModuleType
+from contextlib import contextmanager
 from importlib.util import spec_from_file_location, module_from_spec
 
 from utilities.version import Version
@@ -11,6 +12,14 @@ from ..machinery.loader import IPluginLoader, PluginLoaderInfo
 from .plugin import EZPlugin
 from .plugin_module_loader import PluginModuleLoader
 from .plugin_module import PluginModule
+
+
+@contextmanager
+def plugin_context(plugin: Plugin):
+    try:
+        yield
+    finally:
+        ...
 
 
 class EZPluginLoader(IPluginLoader):
@@ -76,7 +85,7 @@ class EZPluginLoader(IPluginLoader):
         module.__plugin__ = ez_plugin
 
         if ez_plugin.enabled:
-            self._execute_module(module)
+            self._execute_plugin(ez_plugin)
 
             ez_plugin.api = getattr(module, self.get_api_attribute_name(), None)
 
@@ -97,14 +106,16 @@ class EZPluginLoader(IPluginLoader):
         assert isinstance(module, PluginModule)
         return module
     
-    def _execute_module(self, module: ModuleType) -> None:
+    def _execute_plugin(self, plugin: EZPlugin) -> None:
+        module = plugin.module
+        assert module is not None
         assert module.__spec__ is not None
         assert module.__spec__.loader is not None
-        module.__spec__.loader.exec_module(module)
+        with plugin_context(plugin):
+            module.__spec__.loader.exec_module(module)
 
     def _reload_plugin(self, plugin: EZPlugin) -> None:
-        assert plugin.module is not None
-        self._execute_module(plugin.module)
+        self._execute_plugin(plugin)
 
     def _get_plugin_path(self, plugin_id: PluginId):
         return self.plugin_dir / str(plugin_id) / self.get_entry_point_filename()
