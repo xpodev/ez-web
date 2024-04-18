@@ -7,6 +7,7 @@ class Module:
     name: str
     entry_point: ModuleType
     entry_point_path: Path
+    dependencies: list[str]
     priority: int = 0
 
     def __str__(self) -> str:

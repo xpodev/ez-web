@@ -42,6 +42,8 @@ class ModuleManager:
         if not self.module_dir.is_dir():
             return False
 
+        module_names: dict[str, Module] = {}
+
         for item in self.module_dir.iterdir():
             if not item.is_dir():
                 continue
@@ -52,12 +54,13 @@ class ModuleManager:
             module = self._load_module_from(item)
             if module is not None:
                 self._modules.append(module)
+                module_names[module.name] = module
 
         module_api_dir = (ez.EZ_FRAMEWORK_DIR / self.config.module_api_directory).resolve()
 
         graph = DependencyGraph[Module]()
         for module in self._modules:
-            graph.add(module, *getattr(module.entry_point, self.MODULE_DEPENDENCIES_ATTRIBUTE, []))
+            graph.add(module, *map(module_names.__getitem__, module.dependencies))
 
         try:
             order = graph.get_dependency_order()
@@ -115,10 +118,12 @@ class ModuleManager:
             spec.loader.exec_module(module)
 
             priority = getattr(module, self.MODULE_PRIORITY_ATTRIBUTE, 0)
+            dependencies = getattr(module, self.MODULE_DEPENDENCIES_ATTRIBUTE, [])
 
         else:
             module = None
             priority = 0
+            dependencies = []
         
         spec = spec_from_file_location(
             full_module_name + "." + self.config.module_entry_filename, 
@@ -132,7 +137,7 @@ class ModuleManager:
         entry_point = module_from_spec(spec)
         sys.modules[spec.name] = entry_point
 
-        return Module(module_name, entry_point, dir_path, priority=priority)
+        return Module(module_name, entry_point, dir_path, dependencies, priority=priority)
 
     def get_modules(self):
         return self._modules.copy()
