@@ -1,6 +1,5 @@
 from functools import wraps
 from typing import Callable, Any
-from utilities.event import Event
 
 
 class EventHandler:
@@ -29,26 +28,25 @@ class EventHandler:
 class EventEmitter:
     EZ_SYSTEM_ATTRIBUTE = "__ez_system__"
 
-    _events: dict[Event, list[EventHandler]]
+    _events: dict[str, list[EventHandler]]
 
     def __init__(self) -> None:
         self._events = {}
 
-    def _add_event_listener(self, event: Event, handler: EventHandler):
+    def _add_event_listener(self, event: str, handler: EventHandler):
         if event not in self._events:
-            self._events[event] = []
-            self._events[event].append(handler)
+            self._events[event] = [handler]
         elif handler.priority == -1:
             self._events[event].insert(0, handler)
         else:
             for i, h in enumerate(self._events[event]):
-                if h.handler != -1 and h.handler > handler.priority:
+                if h.priority != -1 and h.priority > handler.priority:
                     self._events[event].insert(i, handler)
                     break
             else:
                 self._events[event].append(handler)
     
-    def _remove_event_listener(self, event: Event, listener: Callable[..., None]):
+    def _remove_event_listener(self, event: str, listener: Callable[..., None]):
         if event in self._events:
             self._events[event].remove(listener)
         if not self._events[event]:
@@ -61,14 +59,14 @@ class EventEmitter:
             priority = -1
         return EventHandler(key, f, priority)
 
-    def off(self, event: Event, f: Callable[..., None]):
+    def off(self, event: str, f: Callable[..., None]):
         self._remove_event_listener(event, f)
 
-    def on(self, event: Event, f: Callable[..., None], *, key: object = None, priority: int = 0):
+    def on(self, event: str, f: Callable[..., None], *, key: object = None, priority: int = 0):
         self._add_event_listener(event, self._create_handler(f, key or f, priority))
         return f
 
-    def once(self, event: Event, f: Callable[..., None], *, key: object = None, priority: int = 0):
+    def once(self, event: str, f: Callable[..., None], *, key: object = None, priority: int = 0):
         @wraps(f)
         def wrapper(*args, **kwargs):
             self._remove_event_listener(event, key or f)
@@ -76,7 +74,7 @@ class EventEmitter:
         self._add_event_listener(event, self._create_handler(wrapper, key or f, priority))
         return f
     
-    def emit(self, event: Event, *args, **kwargs) -> bool:
+    def emit(self, event: str, *args, **kwargs) -> bool:
         """
         Emits an event. Returns True if the event was handled by at least one listener.
         """
@@ -92,3 +90,7 @@ class EventEmitter:
             listener(*args, **kwargs)
         
         return True
+
+    def reset(self, event: str):
+        if event in self._events:
+            del self._events[event]
