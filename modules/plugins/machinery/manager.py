@@ -2,8 +2,7 @@ from typing import Callable
 from types import ModuleType
 from pathlib import Path
 
-from sandbox.applications import Application
-from sandbox.host import AppHost, AppHostPermission
+from sandbox.host import AppHost
 from sandbox.security import PermissionSet
 
 from .app import PluginApplication
