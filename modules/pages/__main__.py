@@ -22,7 +22,7 @@ def make_page_route(page: PageInfoModel):
 
     template = ez.templates.get(page.template_name)
 
-    def page_route(request):
+    def page_route():
         return HTMLResponse(render(template.render(page=page)))
     
     # page_route.__signature__ = new_signature
