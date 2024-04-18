@@ -75,21 +75,26 @@ class AppHost(metaclass=AppHostMeta):
         self.add_application(app)
         return app
 
-    @requires(AppHostPermission.ManageApplications)
     def create_artifact(
         self,
         app: Application,
-        artifact_factory: Callable[Concatenate["Application", P], T],
+        artifact_factory: Callable[Concatenate[Application, P], T],
         *args: P.args,
         **kwargs: P.kwargs
     ) -> T:
-        if app not in self._apps:
-            raise ValueError("Application not managed by this host")
-        if app not in self._artifacts:
-            self._artifacts[app] = []
-        artifact = artifact_factory(app, *args, **kwargs)
-        self._artifacts[app].append(artifact)
-        return artifact
+        
+        def _create_artifact():
+            if app not in self._apps:
+                raise ValueError("Application not managed by this host")
+            if app not in self._artifacts:
+                self._artifacts[app] = []
+            artifact = artifact_factory(app, *args, **kwargs)
+            self._artifacts[app].append(artifact)
+            return artifact
+        
+        if app is self.current_application:
+            return _create_artifact()
+        return requires(AppHostPermission.ManageApplications)(_create_artifact)()
 
     @requires(AppHostPermission.ManageApplications)
     def remove_application(self, app: Application):
