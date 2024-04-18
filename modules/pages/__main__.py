@@ -25,8 +25,6 @@ def make_page_route(page: PageInfoModel):
     def page_route():
         return HTMLResponse(render(template.render(page=page)))
     
-    # page_route.__signature__ = new_signature
-
     ez.web.get(page.slug)(page_route)
 
 
