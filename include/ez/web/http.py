@@ -1,3 +1,4 @@
+from asyncio import iscoroutinefunction
 from enum import StrEnum
 from functools import wraps
 
@@ -81,10 +82,19 @@ def _wrap_endpoint(route: str, **kwargs):
         host = lowlevel.APP_HOST
         current_app = host.current_application
 
-        @wraps(func)
-        def wrapper(request, *args, **kwargs):
-            with host.application(current_app):
-                return func(*args, **kwargs)
+        if iscoroutinefunction(func):
+
+            @wraps(func)
+            async def wrapper(request, *args, **kwargs):
+                with host.application(current_app):
+                    return await func(*args, **kwargs)
+
+        else:
+
+            @wraps(func)
+            def wrapper(request, *args, **kwargs):
+                with host.application(current_app):
+                    return func(*args, **kwargs)
 
         lowlevel.WEB_APP.ez_router.add_route(route, wrapper, **kwargs)
         return func
