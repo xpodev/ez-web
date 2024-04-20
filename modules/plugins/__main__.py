@@ -36,3 +36,4 @@ def load_plugins():
 
 
 load_plugins()
+PLUGIN_MANAGER.enable_public_api()
