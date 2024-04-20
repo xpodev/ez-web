@@ -1,6 +1,4 @@
-from typing import TYPE_CHECKING, TypeVar, ParamSpec
-
-from .artifact import ArtifactBase
+from typing import TYPE_CHECKING
 
 from ..identity import ObjectIDBase, ObjectID
 from ..security.security_provider import SecurityProvider, PermissionSet

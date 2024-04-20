@@ -1,6 +1,7 @@
 from contextlib import contextmanager
-from typing import Callable, Concatenate, ParamSpec, TypeVar
+from typing import Any, Callable, Concatenate, ParamSpec, TypeVar
 from sandbox.identity.oid_db import ObjectDatabase
+from sandbox.security.permission import PermissionSet
 from utilities.singleton import SingletonMeta
 
 from .context import Context
@@ -28,7 +29,9 @@ class AppHost(metaclass=AppHostMeta):
     _context: Context
     _db: ObjectDatabase
 
-    def __init__(self, context: Context | Application):
+    def __init__(self, context: Context | Application | Any):
+        if not isinstance(context, (Context, Application)):
+            context = Application("root", PermissionSet())
         if isinstance(context, Application):
             context = Context(context)
         self._context = context
@@ -72,21 +75,26 @@ class AppHost(metaclass=AppHostMeta):
         self.add_application(app)
         return app
 
-    @requires(AppHostPermission.ManageApplications)
     def create_artifact(
         self,
         app: Application,
-        artifact_factory: Callable[Concatenate["Application", P], T],
+        artifact_factory: Callable[Concatenate[Application, P], T],
         *args: P.args,
         **kwargs: P.kwargs
     ) -> T:
-        if app not in self._apps:
-            raise ValueError("Application not managed by this host")
-        if app not in self._artifacts:
-            self._artifacts[app] = []
-        artifact = artifact_factory(app, *args, **kwargs)
-        self._artifacts[app].append(artifact)
-        return artifact
+        
+        def _create_artifact():
+            if app not in self._apps:
+                raise ValueError("Application not managed by this host")
+            if app not in self._artifacts:
+                self._artifacts[app] = []
+            artifact = artifact_factory(app, *args, **kwargs)
+            self._artifacts[app].append(artifact)
+            return artifact
+        
+        if app is self.current_application:
+            return _create_artifact()
+        return requires(AppHostPermission.ManageApplications)(_create_artifact)()
 
     @requires(AppHostPermission.ManageApplications)
     def remove_application(self, app: Application):
@@ -100,15 +108,3 @@ class AppHost(metaclass=AppHostMeta):
             return
         for artifact in self._artifacts.pop(app, ()):
             artifact.remove()
-
-    @requires(AppHostPermission.RegisterEvents)
-    def register_event(self, event: Callable):
-        self._registered_events[event] = self.current_application
-
-    @requires(AppHostPermission.InvokeEvents)
-    def invoke(self, func: Callable, *args, **kwargs):
-        try:
-            with self._context.application(self._registered_events[func]):
-                return func(*args, **kwargs)
-        except KeyError:
-            return func(*args, **kwargs)

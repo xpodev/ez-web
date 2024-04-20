@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -6,23 +7,23 @@ if TYPE_CHECKING:
 
 
 class Context:
-    _execution_stack: list["Application"]
-
     def __init__(self, host_application: "Application") -> None:
-        self._execution_stack = [host_application]
+        self._host_application = host_application
+        self._current_application = ContextVar("_current_application", default=host_application)
 
     @property
     def current_application(self) -> "Application":
-        return self._execution_stack[-1]
+        return self._current_application.get()
 
     @property
     def host_application(self) -> "Application":
-        return self._execution_stack[0]
+        return self._host_application
 
     @contextmanager
     def application(self, application: "Application"):
-        self._execution_stack.append(application)
+        previous_application = self.current_application
+        self._current_application.set(application)
         try:
             yield application
         finally:
-            self._execution_stack.pop()
+            self._current_application.set(previous_application)

@@ -1,7 +1,7 @@
-from utilities.event import Event
+from enum import StrEnum
 
 
-class TreeRenderer(Event):
+class TreeRenderer(StrEnum):
     WillRender = "TreeRenderer.WillRender"
     """
     Called before the tree is rendered.

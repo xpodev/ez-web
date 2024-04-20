@@ -1,7 +1,7 @@
-from utilities.event import Event
+from ez.events import Events
 
 
-class Plugins(Event):
+class Plugins(Events):
     WillLoad = "Plugins.WillLoad"
     """
     Called when the builtins plugins are loaded, before the plugins are loaded.

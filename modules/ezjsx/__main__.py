@@ -5,10 +5,11 @@ from jsx.middlewares import ASGIMiddleware
 from jsx.renderer import render
 from jsx.components import Component
 from jsx.html import Element
-from ez.events import HTTP
+from ez.web.http import HTTPEvent
 from .events import TreeRenderer
 
-@ez.events.on(HTTP.Out)
+
+@ez.events.on(HTTPEvent.Out)
 def render_tree(_):
     if ez.request.method != "GET":
         return

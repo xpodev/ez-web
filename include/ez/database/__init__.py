@@ -1,6 +1,6 @@
 import ez
 from ez.site import CONFIG
-from ez.events import App
+from web.app.events import App
 from sqlalchemy import *
 from sqlalchemy.orm import Session
 
