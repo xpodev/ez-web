@@ -52,6 +52,15 @@ class UnknownPluginLoaderError(EZPluginError):
         return f"Unknown plugin loader: {self._loader_id}"
 
 
+class InvalidPluginManifest(EZPluginError):
+    ...
+
+
+class InvalidPackageName(EZPluginError):
+    ...
+
+
+
 __all__ = [
     "EZPluginError",
     "UnknownPluginError",
@@ -59,4 +68,6 @@ __all__ = [
     "DuplicateIDError",
     "UnknownPluginInstallerError",
     "UnknownPluginLoaderError",
+    "InvalidPluginManifest",
+    "InvalidPackageName",
 ]
