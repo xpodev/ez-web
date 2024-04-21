@@ -19,7 +19,7 @@ def get_plugin(plugin_id: PluginId) -> Plugin:
     return __pm.get_plugin(plugin_id)
 
 
-def install(path: str, *, installer: PluginInstallerId = None):
+def install(path: str, *, installer: PluginInstallerId | None = None):
     return __pm.install(path, installer=installer)
 
 
