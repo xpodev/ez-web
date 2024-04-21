@@ -156,6 +156,11 @@ class PluginManager:
             _installer = self.get_installer(installer)
         return _installer.install(path)
     
+    def upgrade(self, plugin_id: PluginId, path: str):
+        plugin = self.get_plugin(plugin_id)
+        installer = self.get_installer(plugin.info.installer_id)
+        installer.upgrade(plugin_id, path)
+    
     def uninstall(self, plugin_id: PluginId):
         plugin = self.get_plugin(plugin_id)
         installer = self.get_installer(plugin.info.installer_id)
