@@ -1,15 +1,12 @@
 import ez
 import ez.lowlevel
 
-from jsx.server import JSXServer
+from jsx.middlewares import ASGIMiddleware
 from jsx.renderer import render
 from jsx.components import Component
 from jsx.html import Element
 from ez.web.http import HTTPEvent
 from .events import TreeRenderer
-
-
-jsx_server = JSXServer()
 
 
 @ez.events.on(HTTPEvent.Out)
@@ -28,6 +25,6 @@ def render_tree(_):
         ez.response.html(result)
 
 
-jsx_server.mount(ez.lowlevel.WEB_APP)
+ez.lowlevel.WEB_APP.add_middleware(ASGIMiddleware)
 
 __module_name__ = "EZ JSX Integration"
