@@ -44,6 +44,9 @@ class DatabaseRepository(Repository[T]):
 
     def query(self):
         return self._session.query(self._model)
+    
+    def create(self, **kwargs) -> T:
+        return self._model(**kwargs)
 
     def _get(self, key: str, **kwargs) -> Column:
         if kwargs:
