@@ -8,7 +8,7 @@ from .errors import EZPluginError, UnknownPluginError, DuplicateIDError
 from .events import Plugins
 
 from ..manager import PLUGIN_MANAGER as __pm
-from ..config import METADATA_FILENAME, PLUGINS_PUBLIC_API_MODULE_NAME
+from ..config import PLUGINS_PUBLIC_API_MODULE_NAME
 
 
 def get_plugins() -> list[Plugin]:
@@ -59,10 +59,6 @@ def get_api(plugin_id: PluginId) -> PluginAPI | None:
 
 def get_plugins_directory() -> str:
     return str(__pm.plugin_dir)
-
-
-def get_metadata_filename() -> str:
-    return METADATA_FILENAME
 
 
 def get_plugin_public_api_module_name() -> str:
@@ -123,7 +119,6 @@ __all__ = [
     "has_api",
     "get_api",
     "get_plugins_directory",
-    "get_metadata_filename",
     "get_plugin_public_api_module_name",
     "expose",
     "add_installer",
