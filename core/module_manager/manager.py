@@ -76,6 +76,8 @@ class ModuleManager:
                     continue
                 if module.entry_point.__spec__.loader is None:
                     continue
+                
+                module.entry_point.__spec__.loader.exec_module(module.entry_point)
 
                 module_api = module_api_dir / module.name
 
@@ -91,9 +93,8 @@ class ModuleManager:
                             module_api_module = sys.modules[spec.name] = sys.modules[f"ez.{module.name}"] = module_from_spec(spec)
                             setattr(ez, module.name, module_api_module)
                             spec.loader.exec_module(module_api_module)
-                            del sys.modules[spec.name]
 
-                module.entry_point.__spec__.loader.exec_module(module.entry_point)
+                            del sys.modules[spec.name]
 
         return bool(self._modules)
 

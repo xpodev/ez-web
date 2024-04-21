@@ -6,7 +6,7 @@ ez.log.info("Plugin Manager loaded")
 
 
 from .builtins.dbi import PLUGIN_REPOSITORY
-from ez.plugins.events import Plugins
+from .events import Plugins
 
 from ez.database import engine
 
