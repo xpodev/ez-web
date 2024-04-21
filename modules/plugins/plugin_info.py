@@ -1,3 +1,4 @@
+import re
 from pydantic import BaseModel, Field
 from typing import TypeAlias
 from utilities.version import Version
@@ -8,6 +9,9 @@ from .machinery.installer import PluginInstallerId
 
 PluginId: TypeAlias = str
 PackageName: TypeAlias = str
+
+
+PACKAGE_NAME_REGEX = re.compile(r"^[a-z][a-z\-0-9]*$")
 
 
 class PluginInfo(BaseModel):
