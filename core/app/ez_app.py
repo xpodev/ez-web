@@ -24,3 +24,5 @@ class EZApplication:
 
     def run(self) -> Any:
         self.module_manager.load_modules()
+
+        self.event_system.emit("App.Started")
