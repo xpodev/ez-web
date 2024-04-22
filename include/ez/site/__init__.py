@@ -1,39 +1,25 @@
-from functools import wraps
 import ez
 
 from ..config import config
+from .. import typing as check
 
 DIR = ez.SITE_DIR
 CONFIG = config
 
+if check.is_v1(config):
+    PLUGINS = DIR / config.overwrites.plugin_directory
+    TEMPLATES = DIR / config.overwrites.template_directory
+    STATIC = DIR / config.overwrites.static_directory
+    RESOURCES = DIR / config.overwrites.resource_directory
+else:
+    from . import constants as cs
 
-import ez.lowlevel as lowlevel
+    PLUGINS = DIR / cs.PLUGIN_DIR
+    TEMPLATES = DIR / cs.TEMPLATE_DIR
+    STATIC = DIR / cs.STATIC_DIR
+    RESOURCES = DIR / cs.RESOURCE_DIR
 
-
-def add_router(route: str, router):
-    lowlevel.WEB_APP.include_router(router, prefix=route)
-
-
-def router():
-    from fastapi import APIRouter
-    return APIRouter()
-
-
-def get(route: str, **kwargs):
-    def decorator(func):
-        host = lowlevel.APP_HOST
-        current_app = host.current_application
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            with host.application(current_app):
-                return func(*args, **kwargs)
-
-        lowlevel.WEB_APP.get(route, **kwargs)(wrapper)
-        return func
-    return decorator
-
-
+del check
 del ez
 del config
 

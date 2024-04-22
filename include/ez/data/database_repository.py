@@ -27,7 +27,8 @@ class DatabaseRepository(Repository[T]):
             self._session = Session(session)
         else:
             self._session = session
-        self._model.registry.metadata.reflect(bind=self._session.bind)
+        assert self._session.bind is not None
+        self._model.registry.metadata.create_all(self._session.bind)
         self.on_connect()
 
     def disconnect(self) -> None:
@@ -43,6 +44,9 @@ class DatabaseRepository(Repository[T]):
 
     def query(self):
         return self._session.query(self._model)
+    
+    def create(self, **kwargs) -> T:
+        return self._model(**kwargs)
 
     def _get(self, key: str, **kwargs) -> Column:
         if kwargs:

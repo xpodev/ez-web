@@ -4,6 +4,7 @@ from .manager import TEMPLATE_MANAGER
 from . import router
 
 
+@ez.events.on("App.Started")
 def load_template_packs():
     TEMPLATE_MANAGER.load_template_packs()
 
@@ -15,6 +16,3 @@ def load_template_packs():
     ez.log.info(f"Loaded {len(packages)} template packages:")
     for package in packages:
         ez.log.info(f"\tLoaded template package: {package.info.package_name}")
-
-
-load_template_packs()

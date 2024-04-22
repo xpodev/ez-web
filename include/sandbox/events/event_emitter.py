@@ -1,46 +1,40 @@
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from sandbox.host import AppHostPermission
-from sandbox.security import PermissionSet
-from utilities.event import Event
+from sandbox.applications import Artifact
+from sandbox.host import syscall
 from utilities.event_emitter import EventEmitter as BaseEventEmitter, EventHandler
-
-
-from ..applications import Application
 
 
 if TYPE_CHECKING:
     from ..host import AppHost
 
 
-class EventEmitter(Application, BaseEventEmitter):
+def wrap_event_handler(handler: "EventHandler", app_host: "AppHost"):
+    current_application = app_host.current_application
+    origin = handler.handler
+
+    @wraps(origin)
+    def wrapper(*args, **kwargs):
+        with app_host.application(current_application):
+            return origin(*args, **kwargs)
+    handler.handler = wrapper
+
+    return handler
+
+
+class EventEmitter(BaseEventEmitter):
     def __init__(self, app_host: "AppHost") -> None:
-        super().__init__("ee", PermissionSet(
-            AppHostPermission.ManageApplications |
-            AppHostPermission.RegisterEvents
-        ))
         BaseEventEmitter.__init__(self)
 
         self._app_host = app_host
 
-    def setup(self):
-        self._app_host.register_event(type(self)._emit)
-
-    def _add_event_listener(self, event: Event, handler: "EventHandler"):
+    def _add_event_listener(self, event: str, handler: "EventHandler"):
         current_application = self._app_host.current_application
-        origin = handler.handler
-
-        @wraps(origin)
-        def wrapper(*args, **kwargs):
-            with self._app_host.application(current_application):
-                return origin(*args, **kwargs)
-        handler.handler = wrapper
-
-        return super()._add_event_listener(event, handler)
+        self._app_host.create_artifact(current_application, Artifact, lambda: self._remove_event_listener(event, handler))
+        return super()._add_event_listener(event, wrap_event_handler(handler, self._app_host))
     
-    def emit(self, event: Event, *args, **kwargs):
-        return self._app_host.invoke(type(self)._emit, self, event, *args, **kwargs)
-    
-    def _emit(self, event: Event, *args, **kwargs):
+    @syscall
+    def emit(self, event: str, *args, **kwargs):
         return super().emit(event, *args, **kwargs)
+    

@@ -1,5 +1,8 @@
-from fastapi.exceptions import HTTPException
+from starlette.exceptions import HTTPException
+from starlette.responses import JSONResponse
+
 import ez
+import ez.web
 
 from .errors import TemplateNotFoundError
 from .template import Template
@@ -18,12 +21,12 @@ def to_json(item: Template | TemplatePack) -> dict:
     }
 
 
-router = ez.site.router()
+router = ez.web.router()
 
 
-@router.get("")
-def get_templates() -> dict:
-    return {
+@router.get("/")
+def get_templates() -> JSONResponse:
+    return JSONResponse({
         "packages": [
             {
                 "name": package.info.package_name,
@@ -32,16 +35,16 @@ def get_templates() -> dict:
                 ]
             } for package in TEMPLATE_MANAGER.get_packages()
         ]
-    }
+    })
 
 
 @router.get("/{name:path}")
-def get_template(name: str) -> dict:
+def get_template(name: str) -> JSONResponse:
     try:
         item = TEMPLATE_MANAGER.get(name)
     except TemplateNotFoundError as exc:
         raise HTTPException(404, str(exc))
-    return to_json(item)
+    return JSONResponse(to_json(item))
 
 
-ez.site.add_router("/api/templates", router)
+ez.web.add_router("/api/templates", router)

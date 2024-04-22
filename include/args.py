@@ -31,7 +31,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--reload-includes",
-    nargs="+",
+    action="append",
     help="The directories to watch for changes",
 )
 

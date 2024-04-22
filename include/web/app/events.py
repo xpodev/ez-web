@@ -1,7 +1,7 @@
-from utilities.event import Event
+from enum import StrEnum
 
 
-class App(Event):
+class App(StrEnum):
     DidStart = "App.DidStart"
     """
     Called after the app is started.

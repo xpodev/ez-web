@@ -58,7 +58,7 @@ def template(name: str):
         cls: Callable[P, RenderResultT]
     ) -> FunctionalTemplate[P, RenderResultT]: ...
 
-    def wrapper(cls: type[T] | Callable[P, RenderResult]):
+    def wrapper(cls: type[T] | Callable[P, RenderResultT]):
         if is_type(cls):
 
             if not is_renderable(cls):
@@ -71,7 +71,7 @@ def template(name: str):
                     super().__init__(name, None)
 
                 @wraps(cls.render)
-                def render(self, *args, **kwargs) -> RenderResult:
+                def render(self, *args, **kwargs) -> RenderResultT:
                     return cls.render(cls(), *args, **kwargs)
 
             current_pack.add(type(cls.__name__, (_,), {})())

@@ -12,5 +12,3 @@ def main():
     ez.lowlevel.WEB_APP = ez_init.app.web_app
 
     ez_init.app.run()
-
-    import ez.events as _

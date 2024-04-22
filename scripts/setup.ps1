@@ -147,32 +147,16 @@ function InstallDependencies {
     [Parameter(Mandatory=$true)][string]$pythonPath
   )
 
-  $requiremnets = @("sqlalchemy", "argon2-cffi", "python-dotenv", "fastapi", "python-socketio", "uvicorn", "pyYAML")
+  $requiremnets = @("sqlalchemy", "argon2-cffi", "python-socketio", "uvicorn", "pyYAML", "jsx")
 
   $requiremnets | ForEach-Object {
     & $pythonPath -m pip install $_
   }  
 }
 
-function InstallCoreModules {
-  param (
-    [Parameter(Mandatory=$true)][string]$rootDir,
-    [Parameter(Mandatory=$true)][string]$pythonPath
-  )
-
-  $coreModules = @("jsx")
-
-  $coreModulesPath = Join-Path $rootDir "core"
-  $coreModules | ForEach-Object {
-    & $pythonPath -m pip install $_ --target $coreModulesPath
-    Get-ChildItem -Path $coreModulesPath -Filter "$_*" -Recurse | Where-Object { $_.Name -match ".*\.dist-info" } | Remove-Item -Recurse -Force
-  }
-}
-
 Load -function ${function:InstallEmbeddablePython} -Label "Installing Python" -LabelColor $BLUE -PassArgs $rootDir, $pythonPath
 Load -function ${function:InstallPip} -Label "Installing pip" -LabelColor $BLUE -PassArgs $pythonPath
 Load -function ${function:InstallDependencies} -Label "Installing dependencies" -LabelColor $BLUE -PassArgs $pythonPath
-Load -function ${function:InstallCoreModules} -Label "Installing core modules" -LabelColor $BLUE -PassArgs $rootDir, $pythonPath
 
 Write-Output "
 You can now run the app with:

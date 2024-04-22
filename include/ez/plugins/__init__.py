@@ -8,7 +8,7 @@ from .errors import EZPluginError, UnknownPluginError, DuplicateIDError
 from .events import Plugins
 
 from ..manager import PLUGIN_MANAGER as __pm
-from ..config import METADATA_FILENAME, PLUGINS_PUBLIC_API_MODULE_NAME
+from ..config import PLUGIN_MANIFEST_FILENAME, PLUGINS_PUBLIC_API_MODULE_NAME
 
 
 def get_plugins() -> list[Plugin]:

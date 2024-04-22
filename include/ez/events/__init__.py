@@ -1,36 +1,20 @@
-from utilities.event import Event
-
-from .settings import Settings
-from web.events import HTTP
-from web.app.events import App
-
-import ez.lowlevel
+from typing import TYPE_CHECKING
 
 
-def off(event: Event, func):
-    return ez.lowlevel.EZ_APP.event_system.off(event, func)
-
-
-def on(event: Event):
-    def decorator(func):
-        return ez.lowlevel.EZ_APP.event_system.on(event, func)
-    return decorator
-
-
-def once(event: Event):
-    def decorator(func):
-        return ez.lowlevel.EZ_APP.event_system.once(event, func)
-    return decorator
-
-
-def emit(event: Event, *args, **kwargs):
-    return ez.lowlevel.EZ_APP.event_system.emit(event, *args, **kwargs)
+if TYPE_CHECKING:
+    from ....modules.events.event import Event, Events, event
+    from ....modules.events.emit import off, on, once, emit
+else:
+    from ..event import Event, Events, event
+    from ..emit import off, on, once, emit
 
 
 __all__ = [
     "Event",
-    "HTTP",
-    "App",
-    "Settings",
-    "TreeRenderer"
+    "Events",
+    "off",
+    "on",
+    "once",
+    "emit",
+    "event",
 ]

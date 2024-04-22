@@ -2,8 +2,7 @@ from typing import Callable
 from types import ModuleType
 from pathlib import Path
 
-from sandbox.applications import Application
-from sandbox.host import AppHost, AppHostPermission
+from sandbox.host import AppHost
 from sandbox.security import PermissionSet
 
 from .app import PluginApplication
@@ -30,27 +29,17 @@ from ..machinery.loader import IPluginLoader
 from ..config import PLUGINS_PUBLIC_API_MODULE_NAME
 
 
-class PluginManager(Application):
+class PluginManager:
     EZ_PLUGIN_PREFIX = "ez.current-site.plugins"
 
     def __init__(
             self, 
             host: AppHost,
-            oid: str,
             plugin_dir: str, 
             default_installer: Callable[[str], IPluginInstaller] | IPluginInstaller,
             default_loader: Callable[[str], IPluginLoader] | IPluginLoader,
             public_api: ModuleType | None = None
             ) -> None:
-        super().__init__(
-            oid, 
-            PermissionSet(
-                AppHostPermission.CreateApplications | 
-                AppHostPermission.ManageApplications |
-                AppHostPermission.RegisterEvents |
-                AppHostPermission.InvokeEvents
-            )
-        )
         self.app_host = host
 
         self.plugin_dir = Path(plugin_dir)
@@ -167,6 +156,11 @@ class PluginManager(Application):
             _installer = self.get_installer(installer)
         return _installer.install(path)
     
+    def upgrade(self, plugin_id: PluginId, path: str):
+        plugin = self.get_plugin(plugin_id)
+        installer = self.get_installer(plugin.info.installer_id)
+        installer.upgrade(plugin_id, path)
+    
     def uninstall(self, plugin_id: PluginId):
         plugin = self.get_plugin(plugin_id)
         installer = self.get_installer(plugin.info.installer_id)
@@ -236,7 +230,7 @@ class PluginManager(Application):
             app = self._plugin_apps[plugin_id]
         except KeyError:
             app = self._plugin_apps[plugin_id] = self.app_host.create_application(
-                lambda _, oid: PluginApplication(oid, PermissionSet(AppHostPermission.InvokeEvents)), 
+                lambda _, oid: PluginApplication(oid, PermissionSet()), 
                 plugin_id
             )
         with self.app_host.application(app):

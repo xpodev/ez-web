@@ -39,6 +39,9 @@ class IPluginInstaller:
 
     def install(self, path: str) -> PluginInstallationResult:
         raise NotImplementedError
+    
+    def upgrade(self, plugin_id: "PluginId", path: str) -> None:
+        raise NotImplementedError
 
     def uninstall(self, plugin_id: "PluginId") -> None:
         raise NotImplementedError

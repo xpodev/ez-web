@@ -7,7 +7,7 @@ class URIParser:
         self.source = source
         self.stream = StringIO(source)
     
-    def parse(self) -> "UnifiedResourceIdentifier":
+    def parse(self) -> "URI":
         scheme = self._parse_scheme()
         if self.stream.read(2) == "//":
             authority = self._parse_authority()
@@ -18,7 +18,7 @@ class URIParser:
         query = self._parse_query()
         fragment = self._parse_fragment()
 
-        return UnifiedResourceIdentifier(scheme, authority, path, query, fragment, self.source)
+        return URI(scheme, authority, path, query, fragment, self.source)
     
     def _parse_scheme(self) -> str:
         scheme = ""
@@ -125,7 +125,7 @@ class URIPath:
         return hash(self.raw)
 
 
-class UnifiedResourceIdentifier:
+class URI:
     scheme: str
     authority: URIAuthority | None
     path: str
@@ -143,12 +143,12 @@ class UnifiedResourceIdentifier:
         self.raw = raw
 
     @classmethod
-    def parse(cls, uri: str) -> "UnifiedResourceIdentifier":
+    def parse(cls, uri: str) -> "URI":
         parser = URIParser(uri)
         return parser.parse()
     
     @classmethod
-    def safe_parse(cls, uri: str) -> "UnifiedResourceIdentifier":
+    def safe_parse(cls, uri: str) -> "URI":
         result = urlparse(uri)
         return cls(
             result.scheme,
