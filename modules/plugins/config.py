@@ -1,7 +1,6 @@
 import ez
 
 
-PLUGINS_DIRECTORY_NAME = "plugins"
 PLUGINS_DIRECTORY = ez.site.PLUGINS
 
 PLUGINS_PUBLIC_API_DIRECTORY_NAME = "lib/public-api"
