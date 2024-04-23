@@ -79,7 +79,7 @@ class ModuleManager:
                 
                 module.entry_point.__spec__.loader.exec_module(module.entry_point)
 
-                module_api = module_api_dir / module.name
+                module_api = (module_api_dir / module.name).resolve()
 
                 if module_api.exists() and module_api.is_dir():
                     module_api_init = module_api / "__init__.py"
