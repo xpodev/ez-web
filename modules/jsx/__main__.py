@@ -1,28 +1,15 @@
+from starlette.responses import HTMLResponse
 import ez
-import ez.lowlevel
+
+from ez.web.responses import response_for
 
 from jsx.middlewares import ASGIMiddleware
 from jsx.renderer import render
-from jsx.components import Component
-from jsx.html import Element
-from ez.web.http import HTTPEvent
-from .events import TreeRenderer
+from jsx import Component, Element
 
-
-@ez.events.on(HTTPEvent.Out)
-def render_tree(_):
-    if ez.request.method != "GET":
-        return
-
-    body = ez.response.body
-    if isinstance(body, (Component, Element)):
-        if not isinstance(body, components.Page):
-            body = components.Page(body)
-
-        ez.events.emit(TreeRenderer.WillRender, body)
-        result = render(body)
-        ez.events.emit(TreeRenderer.DidRender, body, result)
-        ez.response.html(result)
+@response_for(lambda x: isinstance(x, (Element, Component)))
+def jsx_response(x):
+    return HTMLResponse(render(x))
 
 
 ez.lowlevel.WEB_APP.add_middleware(ASGIMiddleware)
