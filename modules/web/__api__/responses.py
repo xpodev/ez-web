@@ -21,6 +21,8 @@ def auto_response(value, **kwargs):
             raise HTTPException(value[0])
         case str():
             return res.PlainTextResponse(value, **kwargs)
+        case res.Response():
+            return value
         case _:
             for matcher, response in RESPONSE_MAP:
                 if matcher(value):
@@ -39,6 +41,8 @@ def response_for(matcher: Callable[[object], bool]):
 
 
 
-@response_for(lambda x: isinstance(x, dict))
-def dict_response(x):
-    return res.JSONResponse(x)
+@response_for(lambda x: isinstance(x, res.Response))
+def starlette_response(x):
+    return x
+
+
