@@ -1,5 +1,3 @@
-import inspect
-
 import ez
 
 from ez.database import engine
@@ -28,6 +26,7 @@ def make_page_route(page: PageInfoModel):
     ez.web.get(page.slug)(page_route)
 
 
+@ez.events.on("App.Started")
 def setup():
     PAGE_REPOSITORY.connect(engine)
     PAGES_HISTORY_REPOSITORY.connect(engine)
@@ -35,9 +34,6 @@ def setup():
     pages = PAGE_REPOSITORY.all()
     for page in pages:
         make_page_route(page)
-
-
-setup()
 
 
 ez.web.add_router("/api/pages", pages_api_router)
