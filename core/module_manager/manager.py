@@ -56,8 +56,6 @@ class ModuleManager:
                 self._modules.append(module)
                 module_names[module.name] = module
 
-        module_api_dir = (ez.EZ_FRAMEWORK_DIR / self.config.module_api_directory).resolve()
-
         graph = DependencyGraph[Module]()
         for module in self._modules:
             graph.add(module, *map(module_names.__getitem__, module.dependencies))
@@ -79,7 +77,7 @@ class ModuleManager:
                 
                 module.entry_point.__spec__.loader.exec_module(module.entry_point)
 
-                module_api = module_api_dir / module.name
+                module_api = self.module_dir / module.name / "__api__"
 
                 if module_api.exists() and module_api.is_dir():
                     module_api_init = module_api / "__init__.py"

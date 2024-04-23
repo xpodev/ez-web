@@ -1,4 +1,5 @@
 from functools import wraps
+from inspect import iscoroutinefunction
 from typing import Awaitable
 
 from starlette.requests import Request
@@ -18,9 +19,11 @@ class EZRouter(Router):
             current_app = host.current_application
 
             @wraps(func)
-            def wrapper(request: Request) -> Awaitable[Response]:
+            async def wrapper(request: Request) -> Awaitable[Response]:
                 with host.application(current_app):
-                    return func()
+                    if iscoroutinefunction(func):
+                        return await func(request)
+                    return func(request)
 
             self.add_route(route, wrapper, methods=methods, **kwargs)
             return func
