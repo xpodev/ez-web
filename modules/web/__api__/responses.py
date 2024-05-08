@@ -38,11 +38,3 @@ def response_for(matcher: Callable[[object], bool]):
     def decorator(func):
         return register_response(matcher, func)
     return decorator
-
-
-
-@response_for(lambda x: isinstance(x, res.Response))
-def starlette_response(x):
-    return x
-
-
