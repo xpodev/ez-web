@@ -1,6 +1,5 @@
 from json import dumps, loads
 from starlette.requests import Request
-from starlette.responses import JSONResponse
 
 import ez
 import ez.web
@@ -43,14 +42,14 @@ pages_api_router = ez.web.router()
 @pages_api_router.get("/")
 async def get_pages(request, content=True):
     allPages = PAGE_REPOSITORY.all()
-    return JSONResponse([page_result(page, content) for page in allPages])
+    return [page_result(page, content) for page in allPages]
 
 
 @pages_api_router.get("/{page_id}")
 async def get_page(request):
     page_id = request.path_params["page_id"]
     page = PAGE_REPOSITORY.get(key=page_id)
-    return JSONResponse(page_result(page))
+    return page_result(page)
 
 
 @pages_api_router.post("/")
@@ -84,13 +83,11 @@ async def get_page_history(request, latest: bool = False, limit: int = 10):
     )
 
     if len(all) == 0:
-        a = []
+        return []
     elif latest:
-        a = page_history_result(all[0])
+        return page_history_result(all[0])
     else:
-        a = [page_history_result(page) for page in all]
-
-    return JSONResponse(a)
+        return [page_history_result(page) for page in all]
 
 
 @pages_api_router.post("/{page_id}/history")
