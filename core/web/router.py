@@ -14,6 +14,7 @@ class EZRouter(Router):
     def _decorator(self, route: str, methods: list[str], **kwargs):
         def decorator(func):
             from ez import lowlevel
+            from ez.web.responses import auto_response
 
             host = lowlevel.APP_HOST
             current_app = host.current_application
@@ -22,8 +23,8 @@ class EZRouter(Router):
             async def wrapper(request: Request) -> Awaitable[Response]:
                 with host.application(current_app):
                     if iscoroutinefunction(func):
-                        return await func(request)
-                    return func(request)
+                        return auto_response(await func(request))
+                    return auto_response(func(request))
 
             self.add_route(route, wrapper, methods=methods, **kwargs)
             return func
