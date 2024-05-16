@@ -166,5 +166,4 @@ node_modules/
 bin/
 lib/
 
-include/jsx*/
 .vscode/
