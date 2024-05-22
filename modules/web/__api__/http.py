@@ -3,11 +3,15 @@ from typing import TYPE_CHECKING, Any
 from sandbox import current_plugin
 from utilities.utils import bind
 
-from ..http import HTTPException, HTTPMethod, HTTPStatus
-from ..routing import API_ROUTER
-
 if TYPE_CHECKING:
-    from ..routing import PluginRouter
+    from modules.web.routing import PluginRouter
+    from modules.web.context import get_request, set_request, request
+    from modules.web.http import HTTPException, HTTPMethod, HTTPStatus
+    from modules.web.routing import API_ROUTER
+else:
+    from ..context import get_request, set_request, request
+    from ..http import HTTPException, HTTPMethod, HTTPStatus
+    from ..routing import API_ROUTER
 
 
 _EMPTY: Any = object()
@@ -107,4 +111,8 @@ __all__ = [
     "HTTPException",
     "HTTPMethod",
     "HTTPStatus",
+
+    "get_request",
+    "set_request",
+    "request",
 ]
