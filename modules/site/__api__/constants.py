@@ -4,6 +4,11 @@ from ..constants import (
     DEFAULT_TEMPLATE_DIR as TEMPLATE_DIR,
     DEFAULT_STATIC_DIR as STATIC_DIR,
     DEFAULT_RESOURCE_DIR as RESOURCE_DIR,
+
+    DEFAULT_ADMIN_URL as ADMIN_URL,
+    DEFAULT_API_URL as API_URL,
+    DEFAULT_SITE_URL as SITE_URL,
+    DEFAULT_STATIC_URL as STATIC_URL,
 )
 
 
@@ -13,4 +18,9 @@ __all__ = [
     "TEMPLATE_DIR",
     "STATIC_DIR",
     "RESOURCE_DIR",
+
+    "ADMIN_URL",
+    "API_URL",
+    "SITE_URL",
+    "STATIC_URL",
 ]
