@@ -5,5 +5,10 @@ from .provider import (
     get_provider_type,
     get_or_create_provider,
 )
+from .primitives import (
+    StringProvider,
+    BooleanProvider,
+    Config,
+)
 
 
