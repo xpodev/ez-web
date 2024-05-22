@@ -34,6 +34,7 @@ class AppHost(metaclass=AppHostMeta):
             context = Application("root", PermissionSet())
         if isinstance(context, Application):
             context = Context(context)
+        context.host_application._host = self
         self._context = context
         self._root = context.current_application
         self._apps = [self._root]
