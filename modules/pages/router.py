@@ -2,7 +2,6 @@ from json import dumps, loads
 from starlette.requests import Request
 
 import ez
-import ez.web
 
 from .dbi import (
     PAGE_REPOSITORY,
@@ -36,7 +35,7 @@ def page_history_result(page: PagesHistoryModel):
     }
 
 
-pages_api_router = ez.web.router()
+pages_api_router = ez.web.http.router("/pages")
 
 
 @pages_api_router.get("/")
