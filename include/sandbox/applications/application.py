@@ -16,6 +16,12 @@ class Application(ObjectIDBase, SecurityProvider):
         self._host = None
 
     @property
+    def is_root(self):
+        if self.host is None:
+            return False
+        return self.host.root_application == self
+
+    @property
     def host(self) -> "AppHost | None":
         return self._host
 
