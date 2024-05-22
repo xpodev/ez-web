@@ -13,7 +13,7 @@ from .builtins.loader import EZPluginLoader
 
 from .config import PLUGINS_DIRECTORY, PLUGIN_MANIFEST_FILENAME
 
-from . import manager
+from . import manager, router
 
 
 def init_manager(host):
