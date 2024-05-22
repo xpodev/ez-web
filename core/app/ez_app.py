@@ -16,7 +16,7 @@ class EZApplication:
 
         from sandbox.events.event_emitter import EventEmitter
 
-        self.web_app = EZWebApplication(self.app_host)
+        self.web_app = EZWebApplication()
         self.event_system = EventEmitter(self.app_host)
 
         module_manager_config = ModuleManagerConfig()
