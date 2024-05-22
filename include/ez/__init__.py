@@ -15,6 +15,7 @@ if TYPE_CHECKING:
         pages,
         plugins,
         site,
+        templates,
         web,
     )
 
@@ -44,5 +45,6 @@ __all__ = [
     "pages",
     "plugins",
     "site",
+    "templates",
     "web",
 ]
