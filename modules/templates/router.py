@@ -1,3 +1,4 @@
+from os import name
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
@@ -25,7 +26,7 @@ router = ez.web.http.router("/templates")
 
 
 @router.get("/")
-def get_templates() -> JSONResponse:
+def get_templates(_) -> JSONResponse:
     return JSONResponse({
         "packages": [
             {
@@ -39,7 +40,8 @@ def get_templates() -> JSONResponse:
 
 
 @router.get("/{name:path}")
-def get_template(name: str) -> JSONResponse:
+def get_template(request) -> JSONResponse:
+    name = request.path_params["name"]
     try:
         item = TEMPLATE_MANAGER.get(name)
     except TemplateNotFoundError as exc:
