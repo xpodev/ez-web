@@ -75,9 +75,11 @@ def event(name: str, /) -> Callable[[EventHandler[P]], Event[P]]: ...
 @overload
 def event(handler: EventHandler[P], /) -> Event[P]: ...
 
-def event(name_or_handler: str | EventHandler[P] = _EMPTY, /) -> Callable[[EventHandler[P]], Event[P]] | Event[P]:
-    if name_or_handler is _EMPTY:
+def event(name_or_handler: str | EventHandler[P] | None = _EMPTY, /) -> Callable[[EventHandler[P]], Event[P]] | Event[P]:
+    if name_or_handler is None:
         return lambda _: Event()
+    if name_or_handler is _EMPTY:
+        return lambda handler: Event(handler.__name__)
     if isinstance(name_or_handler, str):
         return lambda _: Event(name_or_handler)
     if callable(name_or_handler):
