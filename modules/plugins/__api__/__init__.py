@@ -1,14 +1,27 @@
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
-from ..plugin import Plugin, PluginInfo, PluginId, PluginAPI
-from ..machinery.installer import IPluginInstaller, PluginInstallerInfo, PluginInstallerId
-from ..machinery.loader import IPluginLoader, PluginLoaderInfo
+if TYPE_CHECKING:
+    from modules.plugins.plugin import Plugin, PluginInfo, PluginId, PluginAPI
+    from modules.plugins.machinery.installer import IPluginInstaller, PluginInstallerInfo, PluginInstallerId
+    from modules.plugins.machinery.loader import IPluginLoader, PluginLoaderInfo
 
-from .errors import EZPluginError, UnknownPluginError, DuplicateIDError
-from .events import Plugins
+    from modules.plugins.errors import EZPluginError, UnknownPluginError, DuplicateIDError
+    from .events import Plugins
 
-from ..manager import PLUGIN_MANAGER as __pm
-from ..config import PLUGINS_PUBLIC_API_MODULE_NAME
+    from modules.plugins.manager import PLUGIN_MANAGER as __pm
+    from modules.plugins.config import PLUGINS_PUBLIC_API_MODULE_NAME
+
+    from modules.plugins.framework.settings import Settings
+else:
+    from ..plugin import Plugin, PluginInfo, PluginId, PluginAPI
+    from ..machinery.installer import IPluginInstaller, PluginInstallerInfo, PluginInstallerId
+    from ..machinery.loader import IPluginLoader, PluginLoaderInfo
+
+    from .errors import EZPluginError, UnknownPluginError, DuplicateIDError
+    from .events import Plugins
+
+    from ..manager import PLUGIN_MANAGER as __pm
+    from ..config import PLUGINS_PUBLIC_API_MODULE_NAME
 
 
 def get_plugins() -> list[Plugin]:
