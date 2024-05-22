@@ -16,7 +16,7 @@ class EZApplication:
 
         from sandbox.events.event_emitter import EventEmitter
 
-        self.web_app = EZWebApplication(self.app_host)
+        self.web_app = EZWebApplication()
         self.event_system = EventEmitter(self.app_host)
 
         module_manager_config = ModuleManagerConfig()
@@ -24,5 +24,10 @@ class EZApplication:
 
     def run(self) -> Any:
         self.module_manager.load_modules()
+
+        import ez.log as log
+
+        for module in self.module_manager.get_modules():
+            log.info(f"\tLoaded module: {module.name}")
 
         self.event_system.emit("App.Started")
