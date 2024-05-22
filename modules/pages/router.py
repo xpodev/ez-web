@@ -1,5 +1,6 @@
 from json import dumps, loads
 from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 import ez
 
@@ -11,16 +12,13 @@ from .dbi import (
 )
 
 
-def page_result(page: PageInfoModel, content=True):
+def page_result(page: PageInfoModel):
     page_data = {
         "id": page.id,
         "title": page.title,
         "slug": page.slug,
         "template_name": page.template_name,
     }
-
-    if content:
-        page_data["content"] = page.content
 
     return page_data
 
@@ -39,16 +37,16 @@ pages_api_router = ez.web.http.router("/pages")
 
 
 @pages_api_router.get("/")
-async def get_pages(request, content=True):
+def get_pages(_):
     allPages = PAGE_REPOSITORY.all()
-    return [page_result(page, content) for page in allPages]
+    return JSONResponse([page_result(page) for page in allPages])
 
 
 @pages_api_router.get("/{page_id}")
 async def get_page(request):
     page_id = request.path_params["page_id"]
     page = PAGE_REPOSITORY.get(key=page_id)
-    return page_result(page)
+    return JSONResponse(page_result(page))
 
 
 @pages_api_router.post("/")
