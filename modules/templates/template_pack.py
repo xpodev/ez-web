@@ -18,7 +18,7 @@ class TemplatePack(TemplateBase):
         for item in items:
             self.add(item)
 
-    def add(self, item: "TemplatePack | Template", alias: str = None) -> None:
+    def add(self, item: "TemplatePack | Template", alias: str | None = None) -> None:
         if not alias:
             alias = item.name
         if alias in self.items:
@@ -35,6 +35,8 @@ class TemplatePack(TemplateBase):
                 return self.items[name]
             item = self
             for part in parts:
+                if not isinstance(item, TemplatePack):
+                    raise TemplateNotFoundError(name)
                 item = item[part]
             return item
         except KeyError:

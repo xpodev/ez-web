@@ -1,96 +1,51 @@
-from functools import wraps
-from typing import Callable, TypeVar, ParamSpec, Generic, overload, TYPE_CHECKING
+from inspect import signature
+from typing import TYPE_CHECKING, Callable, Generic, TypeAlias, TypeVar
 
-from .types import RenderResult
+from pydantic import BaseModel
+
 from .template_base import TemplateBase
-from .utils import is_type, is_function, assert_valid_template_name, is_renderable
-
+from .types import RenderResult
 
 if TYPE_CHECKING:
-    from .template_package import TemplatePack
+    from .template_pack import TemplatePack
 
 
-T = TypeVar("T")
-P = ParamSpec("P")
-RenderResultT = TypeVar("RenderResultT", bound=RenderResult)
+T = TypeVar("T", bound=BaseModel)
+Render: TypeAlias = Callable[[T], RenderResult]
 
 
-def _try_get_current_pack() -> "TemplatePack | None":
-    from .manager import TEMPLATE_MANAGER
+class Template(TemplateBase, Generic[T]):
+    def __init__(self, name: str, params: type[T] | type, parent: "TemplatePack | None" = None):
+        if not isinstance(params, type) or not issubclass(params, BaseModel):
+            raise TypeError(f"Functional template parameter must be a subclass of BaseModel. Got {params}.")
 
-    loader = TEMPLATE_MANAGER.current_loader
-    if loader is None:
-        return None
+        super().__init__(name, parent)
 
-    try:
-        return loader.current_pack
-    except AttributeError:
-        return None
+        self._params = params
 
+    @property
+    def params(self):
+        return self._params
 
-class Template(TemplateBase):
-    def render(self, *args, **kwargs) -> RenderResult:
+    def render(self, args: T) -> RenderResult:
         raise NotImplementedError
 
 
-class FunctionalTemplate(Template, Generic[P, RenderResultT]):
-    def __init__(self, name: str, render: Callable[P, RenderResultT]) -> None:
-        super().__init__(name, None)
-        self.render = render
+class FunctionalTemplate(Template, Generic[T]):
+    def __init__(self, name: str, render: Render[T], parent: "TemplatePack | None" = None) -> None:
+        sig = signature(render)
 
-    def __call__(self, *args: P.args, **kwds: P.kwargs) -> RenderResultT:
-        return self.render(*args, **kwds)
+        if len(sig.parameters) != 1:
+            raise TypeError(f"Functional template must have exactly one parameter. Got {len(sig.parameters)}.")
+        
+        annotation = list(sig.parameters.values())[0].annotation
 
+        super().__init__(name, annotation, parent)
+        self._render = render
 
-def template(name: str):
-    assert_valid_template_name(name)
-
-    current_pack = _try_get_current_pack()
-    if current_pack is None:
-        raise TypeError(
-            "Current template pack loader does not support adding templates."
-        )
-
-    @overload
-    def wrapper(cls: type[T]) -> type[T]: ...
-    @overload
-    def wrapper(
-        cls: Callable[P, RenderResultT]
-    ) -> FunctionalTemplate[P, RenderResultT]: ...
-
-    def wrapper(cls: type[T] | Callable[P, RenderResultT]):
-        if is_type(cls):
-
-            if not is_renderable(cls):
-                raise TypeError(
-                    f"Class '{cls.__name__}' must implement a 'render' method to be a valid template."
-                )
-            
-            class _(Template):
-                def __init__(self):
-                    super().__init__(name, None)
-
-                @wraps(cls.render)
-                def render(self, *args, **kwargs) -> RenderResultT:
-                    return cls.render(cls(), *args, **kwargs)
-
-            current_pack.add(type(cls.__name__, (_,), {})())
-            return cls
-
-        elif is_function(cls):
-
-            result = type(name, (FunctionalTemplate,), {})(name, cls)
-            current_pack.add(result)
-            return result
-        else:
-            raise TypeError(
-                f"Decorated template must either be a class or a function, not {type(cls).__name__}"
-            )
-
-    return wrapper
+    def render(self, args: T) -> RenderResult:
+        return self._render(args)
 
 
-__all__ = [
-    "Template",
-    "template",
-]
+def template(name: str) -> Callable[[Render[T]], Render[T]]:
+    raise NotImplementedError

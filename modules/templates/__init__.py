@@ -3,4 +3,5 @@ __deps__ = [
     "events",
     "plugins",
     "site",
+    "web",
 ]
