@@ -18,7 +18,7 @@ class TemplatePack(TemplateBase):
         for item in items:
             self.add(item)
 
-    def add(self, item: "TemplatePack | Template", alias: str = None) -> None:
+    def add(self, item: "TemplatePack | Template", alias: str | None = None) -> None:
         if not alias:
             alias = item.name
         if alias in self.items:
