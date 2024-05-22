@@ -26,21 +26,24 @@ class PluginRouter:
             return cast(Router, self._mounts[app].app)
         
         router = cls()
-        mount = self._mounts[app] = Mount(route, app=router)
+        mount = Mount(route, app=router)
 
-        def _on_disable():
-            if app not in self._mounts:
-                return
-            
-            router = self._mounts.pop(app)
-            try:
-                self._router.routes.remove(router)
-            except ValueError:
-                ...
-        
+        if not app.is_root:
+            self._mounts[app] = mount
+
+            def _on_disable():
+                if app not in self._mounts:
+                    return
+                
+                router = self._mounts.pop(app)
+                try:
+                    self._router.routes.remove(router)
+                except ValueError:
+                    ...
+
+            AppHost.current_host.create_artifact(app, Artifact, _on_disable)
+
         self._router.mount(route, router)
-
-        AppHost.current_host.create_artifact(app, Artifact, _on_disable)
 
         return router
     
