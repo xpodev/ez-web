@@ -41,6 +41,13 @@ class StringProvider(_ValueProvider[str], data_type=str):
 
     def render_input(self):
         return Input(value=self.value)
+
+
+class IntegerProvider(_ValueProvider[int], data_type=int):
+    DEFAULT = 0
+
+    def render_input(self):
+        return Input(type="number", value=self.value)
     
 
 class BooleanProvider(_ValueProvider[bool], data_type=bool):
