@@ -15,6 +15,8 @@ The user context is data for a specific user, but shared with all its sessions (
 The session context is data for a specific session (connection, tab in browser, etc..)
 """
 
+import ez
+
 from typing import TypeAlias, overload
 from utilities.utils import bind
 
@@ -239,6 +241,21 @@ def get_connected_users(ctx: ContextRoot):
         return list(ctx._user_contexts.keys())
     
     return _get_users
+
+
+def get_current_session() -> Session:
+    request = ez.web.http.request()
+    if request is None:
+        raise ValueError("No request found")
+    try:
+        sid = request.session["ez-admin:sid"]
+    except KeyError:
+        raise ValueError("Missing session id")
+    return get_session(sid)
+
+
+def get_current_user():
+    return get_current_session().user
 
 
 del _SITE_CONTEXT
