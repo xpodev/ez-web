@@ -1,1 +1,3 @@
-# web/__init__.py
+__deps__ = [
+    "site"
+]
