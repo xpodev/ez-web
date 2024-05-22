@@ -23,7 +23,7 @@ def current_router(api_router: "PluginRouter"):
 
 @bind(API_ROUTER)
 def router(api_router: "PluginRouter"):
-    def _router(route: str = _EMPTY):
+    def _router(route: str = _EMPTY, **kwargs):
         plugin = current_plugin()
 
         if not plugin.is_root:
@@ -38,7 +38,7 @@ def router(api_router: "PluginRouter"):
         if route is _EMPTY:
             route = '/' + plugin.oid
 
-        return api_router.add_router(plugin, route)
+        return api_router.add_router(plugin, route, **kwargs)
 
     return _router
 
