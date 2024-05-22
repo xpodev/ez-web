@@ -1,4 +1,3 @@
-from os import name
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
