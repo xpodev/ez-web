@@ -21,7 +21,7 @@ def to_json(item: Template | TemplatePack) -> dict:
     }
 
 
-router = ez.web.router()
+router = ez.web.http.router("/templates")
 
 
 @router.get("/")
@@ -45,6 +45,3 @@ def get_template(name: str) -> JSONResponse:
     except TemplateNotFoundError as exc:
         raise HTTPException(404, str(exc))
     return JSONResponse(to_json(item))
-
-
-ez.web.add_router("/api/templates", router)
