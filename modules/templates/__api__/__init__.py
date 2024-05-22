@@ -1,4 +1,3 @@
-from .page_data import PageData
 
 from ..errors import TemplateNotFoundError
 from ..manager import TEMPLATE_MANAGER as __tm
