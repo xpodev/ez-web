@@ -100,7 +100,7 @@ class EZTemplateLoader(ITemplatePackLoader):
             return
 
         for item in path.iterdir():
-            name = mapping.get(item, item.stem)
+            name = mapping.get(item.with_suffix(""), item.stem)
             if item.name.startswith("_"):
                 continue
             elif item.is_dir():
