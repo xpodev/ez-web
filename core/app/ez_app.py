@@ -25,4 +25,9 @@ class EZApplication:
     def run(self) -> Any:
         self.module_manager.load_modules()
 
+        import ez.log as log
+
+        for module in self.module_manager.get_modules():
+            log.info(f"\tLoaded module: {module.name}")
+
         self.event_system.emit("App.Started")
