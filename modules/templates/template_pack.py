@@ -35,6 +35,8 @@ class TemplatePack(TemplateBase):
                 return self.items[name]
             item = self
             for part in parts:
+                if not isinstance(item, TemplatePack):
+                    raise TemplateNotFoundError(name)
                 item = item[part]
             return item
         except KeyError:
