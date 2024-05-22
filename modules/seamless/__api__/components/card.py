@@ -1,5 +1,5 @@
-from jsx.components import ContainerComponent
-from jsx.html import Div
+from seamless.components import ContainerComponent
+from seamless.html import Div
 
 
 class Card(ContainerComponent):

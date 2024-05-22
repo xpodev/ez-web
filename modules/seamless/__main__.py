@@ -3,9 +3,9 @@ import ez
 
 from ez.web.responses import response_for
 
-from jsx.middlewares import ASGIMiddleware
-from jsx.renderer import render
-from jsx import Component, Element
+from seamless.middlewares import ASGIMiddleware
+from seamless.renderer import render
+from seamless import Component, Element
 
 @response_for(lambda x: isinstance(x, (Element, Component)))
 def jsx_response(x):
