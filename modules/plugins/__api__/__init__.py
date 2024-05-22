@@ -23,6 +23,8 @@ else:
     from ..manager import PLUGIN_MANAGER as __pm
     from ..config import PLUGINS_PUBLIC_API_MODULE_NAME
 
+    from ..framework.settings import Settings
+
 
 def get_plugins() -> list[Plugin]:
     return __pm.get_plugins()
@@ -121,6 +123,7 @@ __all__ = [
     "PluginInfo",
     "EZPluginError",
     "Plugins",
+    "Settings",
     "get_plugins",
     "get_plugin",
     "install",
