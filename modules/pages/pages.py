@@ -2,7 +2,6 @@ from typing import Any, Iterable
 
 import ez
 
-# from ez.data.providers import DataProviderBase
 from ez.data import DataProviderBase
 
 from .manager import PAGE_MANAGER
