@@ -1,4 +1,13 @@
-from typing import Any, Callable, Concatenate, ParamSpec, TypeAlias, TypeVar, SupportsIndex, overload
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    ParamSpec,
+    TypeAlias,
+    TypeVar,
+    SupportsIndex,
+    overload,
+)
 
 
 _EMPTY: Any = object()
@@ -8,7 +17,6 @@ MenuID: TypeAlias = str
 P = ParamSpec("P")
 MenuEntryT = TypeVar("MenuEntryT", bound="MenuEntry")
 MenuEntryCls = Callable[Concatenate["Menu", MenuID, P], MenuEntryT]
-
 
 
 class MenuEntry:
@@ -21,7 +29,7 @@ class MenuEntry:
     @property
     def menu(self):
         return self._parent
-    
+
     @property
     def id(self):
         return self._id
@@ -101,26 +109,23 @@ class Menu(MenuEntry):
         self.add_entries_at(index, *entries)
 
     def create_entry(
-            self, 
-            cls: MenuEntryCls[P, MenuEntryT], 
-            *args: P.args, 
-            **kwargs: P.kwargs
-            ) -> MenuEntryT:
+        self, cls: MenuEntryCls[P, MenuEntryT], *args: P.args, **kwargs: P.kwargs
+    ) -> MenuEntryT:
         entry = cls(self, *args, **kwargs)
         self.add_entry(entry)
         return entry
-    
+
     def create_entry_at(
-            self, 
-            index: SupportsIndex, 
-            cls: MenuEntryCls[P, MenuEntryT],
-            *args: P.args,
-            **kwargs: P.kwargs
-            ) -> MenuEntryT:
+        self,
+        index: SupportsIndex,
+        cls: MenuEntryCls[P, MenuEntryT],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> MenuEntryT:
         entry = cls(self, *args, **kwargs)
         self._entries.insert(index, entry)
         return entry
-    
+
     @overload
     def entry_at(self, index: SupportsIndex, /) -> MenuEntry: ...
     @overload
@@ -169,7 +174,7 @@ class Menu(MenuEntry):
         if isinstance(index_or_id, MenuID):
             return self._mapping[index_or_id]
         return self._entries[index_or_id]
-    
+
     @overload
     def __setitem__(self, index: SupportsIndex, entry: MenuEntry, /) -> None: ...
     @overload
@@ -201,7 +206,4 @@ class Menu(MenuEntry):
         return len(self._entries)
 
 
-__all__ = [
-    "Menu",
-    "MenuEntry"
-]
+__all__ = ["Menu", "MenuEntry"]
