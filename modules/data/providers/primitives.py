@@ -36,7 +36,7 @@ class StringProvider(_ValueProvider[str], data_type=str):
     DEFAULT = ""
 
     def render_input(self):
-        return Input(value=self.value)
+        return Input(type="text", value=self.value)
     
 
 class BooleanProvider(_ValueProvider[bool], data_type=bool):
