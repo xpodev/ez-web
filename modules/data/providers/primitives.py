@@ -10,10 +10,6 @@ from seamless.html import Input
 _T = TypeVar("_T")
 
 
-# class Value(RootModel[_T], Generic[_T]):
-#     ...
-
-
 class Config(RootModel[_T], Generic[_T]):
     ...
 
