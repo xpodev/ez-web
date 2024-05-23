@@ -1,5 +1,3 @@
-DEFAULT_CONFIG_VERSION = 1
-
 CONFIG_FILENAME = "site.yaml"
 
 DEFAULT_PLUGIN_DIR = "plugins"
