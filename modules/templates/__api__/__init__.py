@@ -1,22 +1,20 @@
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
-
 
 if TYPE_CHECKING:
     from modules.templates.errors import TemplateNotFoundError
     from modules.templates.template_package import TemplatePackage
     from modules.templates.template_pack import TemplatePack
-    from modules.templates.template import Template, template
+    from modules.templates.template import Template, TemplateParams, template
 else:
     from ..errors import TemplateNotFoundError
     from ..manager import TEMPLATE_MANAGER as __tm
     from ..template_package import TemplatePackage
     from ..template_pack import TemplatePack
-    from ..template import Template, template
+    from ..template import Template, TemplateParams, template
 
 
-class Empty(BaseModel):
+class Empty(TemplateParams):
     pass
 
 

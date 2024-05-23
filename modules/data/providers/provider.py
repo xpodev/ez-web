@@ -5,11 +5,10 @@ from pydantic import BaseModel, create_model
 from seamless.html import Label
 
 from ..configurable import Configurable
-from ..params import Params
 
 
 T = TypeVar("T")
-Config = TypeVar("Config", bound=Params)
+Config = TypeVar("Config", bound=BaseModel)
 
 
 _DataProviderType: TypeAlias = "type[DataProviderBase]"
@@ -128,7 +127,7 @@ class ModelProvider(DataProviderBase[T], Configurable[Config], Generic[T, Config
         config (Config): Configuration for the data provider.
     """
 
-    __ez_config_type__: ClassVar[type[Params]]
+    __ez_config_type__: ClassVar[type[BaseModel]]
 
     def __init_subclass__(cls, *, config_type: type[Config], **kwargs) -> None:
         super().__init_subclass__(**kwargs)

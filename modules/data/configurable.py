@@ -1,9 +1,9 @@
 from typing import Any, Generic, Self, TypeVar, get_args, get_origin
 
-from .params import Params
+from pydantic import BaseModel
 
 
-T = TypeVar("T", bound=Params)
+T = TypeVar("T", bound=BaseModel)
 
 
 class Configurable(Generic[T]):
@@ -26,8 +26,8 @@ class Configurable(Generic[T]):
                 config_cls = args[0]
                 if isinstance(config_cls, TypeVar):
                     raise ValueError(f"Cannot load Configurable class {cls} with a type argument that is a TypeVar")
-                if not issubclass(config_cls, Params):
-                    raise ValueError(f"Configurable class {cls} has a type argument that is not a subclass of Params")
-                config: Params = config_cls.model_validate(config)
+                if not issubclass(config_cls, BaseModel):
+                    raise ValueError(f"Configurable class {cls} has a type argument that is not a subclass of BaseModel")
+                config: BaseModel = config_cls.model_validate(config)
                 return cls(config)
         raise ValueError(f"Configurable class {cls} does not have a base class that is a subclass of Configurable")

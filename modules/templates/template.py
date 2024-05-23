@@ -1,8 +1,7 @@
 from inspect import signature
 from typing import TYPE_CHECKING, Callable, Generic, TypeAlias, TypeVar
 
-from pydantic import BaseModel
-
+from .template_params import TemplateParams
 from .template_base import TemplateBase
 from .types import RenderResult
 
@@ -10,13 +9,13 @@ if TYPE_CHECKING:
     from .template_pack import TemplatePack
 
 
-T = TypeVar("T", bound=BaseModel)
+T = TypeVar("T", bound=TemplateParams)
 Render: TypeAlias = Callable[[T], RenderResult]
 
 
 class Template(TemplateBase, Generic[T]):
     def __init__(self, name: str, params: type[T] | type, parent: "TemplatePack | None" = None):
-        if not isinstance(params, type) or not issubclass(params, BaseModel):
+        if not isinstance(params, type) or not issubclass(params, TemplateParams):
             raise TypeError(f"Functional template parameter must be a subclass of BaseModel. Got {params}.")
 
         super().__init__(name, parent)
