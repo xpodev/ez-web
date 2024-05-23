@@ -63,22 +63,6 @@ class DataProviderBase(Generic[T]):
     def __init_subclass__(cls, *, data_type: type[T] | None = None, set_as_default=False, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
         
-        # if not issubclass(cls, DataProviderBase):
-        #     raise TypeError(f"DataProvider class {cls} must be a subclass of DataProviderBase")
-        
-        # generic_bases = get_generic_instantiation_bases_of(cls, DataProviderBase)
-        # if len(generic_bases) > 1:
-        #     raise TypeError(f"DataProvider class {cls} must have only one base class that is a subclass of {DataProviderBase.__name__}")
-        
-        # if not generic_bases:
-        #     raise TypeError(f"DataProvider class {cls} must have a base class that is an instantiation of {DataProviderBase.__name__}")
-
-        # cls.__ez_data_provider_base__ = generic_bases[0][0]
-
-        # data_type, = get_args(cls.__ez_data_provider_base__)
-
-        # if isinstance(data_type, TypeVar):
-        #     return
         if data_type is None:
             return
         
@@ -145,26 +129,10 @@ class ModelProvider(DataProviderBase[T], Configurable[Config], Generic[T, Config
     """
 
     __ez_config_type__: ClassVar[type[Params]]
-    # __ez_data_provider_type__: ClassVar[type["DataProviderBase"] | None] = None
 
     def __init_subclass__(cls, *, config_type: type[Config], **kwargs) -> None:
         super().__init_subclass__(**kwargs)
 
-        # if not issubclass(cls, ModelProvider):
-        #     raise TypeError(f"ModelProvider class {cls} must be a subclass of ModelProvider")
-
-        # generic_bases = get_generic_instantiation_bases_of(ModelProvider)
-
-        # if len(generic_bases) > 1:
-        #     raise TypeError(f"ModelProvider class {cls} must have only one base class that is a subclass of {ModelProvider.__name__}")
-        
-        # if not generic_bases:
-        #     raise TypeError(f"ModelProvider class {cls} must have a base class that is an instantiation of {ModelProvider.__name__}")
-        
-        # cls.__ez_data_provider_type__ = generic_bases[0][0]
-
-        # _, config = get_args(cls.__ez_data_provider_type__)
-        
         cls.__ez_config_type__ = config_type
 
     def provide(self) -> T:
