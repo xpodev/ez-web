@@ -12,13 +12,10 @@ from .routing import PAGE_ROUTER
 
 
 def _load_providers(config: Iterable[tuple[str, type[DataProviderBase], Any]]) -> dict[str, DataProviderBase]:
-    result = {}
-
-    for name, tp, args in config:
-        provider = tp.load(args)
-        result[name] = provider
-
-    return result
+    return {
+        name: tp.load(args)
+        for name, tp, args in config
+    }
 
 
 def _zip_providers(providers: dict[str, Any], template: "ez.templates.Template") -> Iterable[tuple[str, type[DataProviderBase], Any]]:
