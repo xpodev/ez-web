@@ -158,7 +158,7 @@ class ModelProvider(DataProviderBase[T], Configurable[Config], Generic[T, Config
             provider = _DATA_PROVIDER_REGISTRY.get(field_type)
             data = getattr(self.config, name)
 
-            field_input = provider(data).render_input()
+            field_input = provider.load(data).render_input()
             field_input.props["name"] = name
 
             yield Label(value=field.alias, for_=name)
