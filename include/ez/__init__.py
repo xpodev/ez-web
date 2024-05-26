@@ -12,8 +12,10 @@ if TYPE_CHECKING:
         events,
         log,
         lowlevel,
+        pages,
         plugins,
         site,
+        templates,
         web,
     )
 
@@ -40,7 +42,9 @@ __all__ = [
     "events",
     "log",
     "lowlevel",
+    "pages",
     "plugins",
     "site",
+    "templates",
     "web",
 ]

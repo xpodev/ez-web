@@ -1,1 +1,4 @@
-# web/__main__.py
+from . import routing
+
+
+routing.add_route(routing.API_MOUNT)

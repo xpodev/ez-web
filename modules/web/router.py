@@ -1,34 +1,14 @@
-from functools import wraps
-from inspect import iscoroutinefunction
-from typing import Awaitable
-
-from starlette.requests import Request
-from starlette.responses import Response
 from starlette.routing import Router
 
 
 class EZRouter(Router):
-    def add_router(self, route: str, router):
+    def add_router(self, route: str, router: Router):
         self.mount(route, router)
 
     def _decorator(self, route: str, methods: list[str], **kwargs):
         def decorator(func):
-            from ez import lowlevel
-            from ez.web.responses import auto_response
-
-            host = lowlevel.APP_HOST
-            current_app = host.current_application
-
-            @wraps(func)
-            async def wrapper(request: Request) -> Awaitable[Response]:
-                with host.application(current_app):
-                    if iscoroutinefunction(func):
-                        return auto_response(await func(request))
-                    return auto_response(func(request))
-
-            self.add_route(route, wrapper, methods=methods, **kwargs)
-            return func
-
+            return self.add_route(route, func, methods=methods, **kwargs)
+        
         return decorator
 
     def get(self, route: str, **kwargs):

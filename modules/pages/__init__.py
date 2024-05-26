@@ -1,3 +1,5 @@
 __deps__ = [
-    "templates"
+    "data",
+    "templates",
+    "web",
 ]

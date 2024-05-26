@@ -1,6 +1,7 @@
-from typing import Any, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
-from ez.data.repository import Repository
+if TYPE_CHECKING:
+    from ez.data.repository import Repository
 
 from .object_id import ObjectID
 from .uid import UID
@@ -14,7 +15,7 @@ class OIDCategory:
     def add(self, value: Any, *, oid: ObjectID | None = None) -> ObjectID:
         raise NotImplementedError()
     
-    def get(self, oid: ObjectID, path: ObjectPath) -> Repository:
+    def get(self, oid: ObjectID, path: ObjectPath) -> "Repository":
         raise NotImplementedError()
     
     def set(self, oid: ObjectID, path: ObjectPath, value):
@@ -22,9 +23,9 @@ class OIDCategory:
 
 
 class OIDCategoryRepository(OIDCategory):
-    _repository: Repository[Any]
+    _repository: "Repository[Any]"
 
-    def __init__(self, name: str, repository: Repository) -> None:
+    def __init__(self, name: str, repository: "Repository") -> None:
         self.name = name
         self._repository = repository
 

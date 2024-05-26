@@ -1,1 +1,1 @@
-from jsx.types import RenderResult
+from seamless.types import RenderResult

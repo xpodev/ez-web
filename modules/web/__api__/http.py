@@ -1,148 +1,110 @@
-from asyncio import iscoroutinefunction
-from enum import StrEnum
-from functools import wraps
+from typing import TYPE_CHECKING, Any
 
+from sandbox import current_plugin
 from utilities.utils import bind
 
-import ez.lowlevel as lowlevel
+from ..http import HTTPException, HTTPMethod, HTTPStatus
+from ..routing import API_ROUTER
+
+if TYPE_CHECKING:
+    from ..routing import PluginRouter
 
 
-class HTTPEvent(StrEnum):
-    In = "HTTP.In"
-    """
-    Called when a HTTP request is received.
-
-    :param request: The request object.
-    """
-    Out = "HTTP.Out"
-    """
-    Called when a HTTP response is sent.
-
-    :param request: The request object.
-    """
-
-    GET = "HTTP.GET"
-    """
-    Called when a HTTP GET request is received.
-
-    :param request: The request object.
-    """
-    POST = "HTTP.POST"
-    """
-    Called when a HTTP POST request is received.
-
-    :param request: The request object.
-    """
-    PUT = "HTTP.PUT"
-    """
-    Called when a HTTP PUT request is received.
-
-    :param request: The request object.
-    """
-    DELETE = "HTTP.DELETE"
-    """
-    Called when a HTTP DELETE request is received.
-
-    :param request: The request object.
-    """
-    PATCH = "HTTP.PATCH"
-    """
-    Called when a HTTP PATCH request is received.
-
-    :param request: The request object.
-    """
-    HEAD = "HTTP.HEAD"
-    """
-    Called when a HTTP HEAD request is received.
-
-    :param request: The request object.
-    """
-    OPTIONS = "HTTP.OPTIONS"
-    """
-    Called when a HTTP OPTIONS request is received.
-
-    :param request: The request object.
-    """
-    TRACE = "HTTP.TRACE"
-    """
-    Called when a HTTP TRACE request is received.
-
-    :param request: The request object.
-    """
-    CONNECT = "HTTP.CONNECT"
-    """
-    Called when a HTTP CONNECT request is received.
-
-    :param request: The request object.
-    """
+_EMPTY: Any = object()
 
 
-def _wrap_endpoint(route: str, **kwargs):
-    def decorator(func):
-        host = lowlevel.APP_HOST
-        current_app = host.current_application
-
-        if iscoroutinefunction(func):
-
-            @wraps(func)
-            async def wrapper(request, *args, **kwargs):
-                with host.application(current_app):
-                    return await func(*args, **kwargs)
-
-        else:
-
-            @wraps(func)
-            def wrapper(request, *args, **kwargs):
-                with host.application(current_app):
-                    return func(*args, **kwargs)
-
-        lowlevel.WEB_APP.ez_router.add_route(route, wrapper, **kwargs)
-        return func
-
-    return decorator
+@bind(API_ROUTER)
+def current_router(api_router: "PluginRouter"):
+    def _current_router():
+        return api_router.get_router(current_plugin())
+    
+    return _current_router
 
 
-def add_router(route: str, router):
-    lowlevel.WEB_APP.ez_router.mount(route, router)
+@bind(API_ROUTER)
+def router(api_router: "PluginRouter"):
+    def _router(route: str = _EMPTY):
+        plugin = current_plugin()
+
+        if not plugin.is_root:
+            plugin_router = api_router.get_router(plugin)
+            if plugin_router is not None:
+                if route is _EMPTY:
+                    return plugin_router
+                
+                # TODO: better exception type
+                raise Exception(f"Plugin '{plugin.oid}' already has a router mounted at '{route}'")
+
+        if route is _EMPTY:
+            route = '/' + plugin.oid
+
+        return api_router.add_router(plugin, route)
+
+    return _router
 
 
-def router():
-    from core.web.router import EZRouter as Router
+@bind(API_ROUTER)
+def route(api_router: "PluginRouter"):
+    def _route(route: str, methods: list[HTTPMethod | str] = _EMPTY, **kwargs):
+        if methods is _EMPTY or not methods:
+            methods = []
 
-    return Router()
-
-
-def get(route: str, **kwargs):
-    return _wrap_endpoint(route, methods=["GET"], **kwargs)
-
-
-def post(route: str, **kwargs):
-    return _wrap_endpoint(route, methods=["POST"], **kwargs)
-
-
-def put(route: str, **kwargs):
-    return _wrap_endpoint(route, methods=["PUT"], **kwargs)
+        router = current_router()
+        if router is None:
+            # TODO: better exception type
+            raise Exception("No router found for current plugin")
+        
+        router.route(route, methods=list(map(str, methods)), **kwargs)
+    
+    return _route
 
 
-def delete(route: str, **kwargs):
-    return _wrap_endpoint(route, methods=["DELETE"], **kwargs)
+def get(_route: str, **kwargs):
+    return route(_route, methods=[HTTPMethod.GET], **kwargs)
 
 
-def patch(route: str, **kwargs):
-    return _wrap_endpoint(route, methods=["PATCH"], **kwargs)
+def post(_route: str, **kwargs):
+    return route(_route, methods=[HTTPMethod.POST], **kwargs)
 
 
-def options(route: str, **kwargs):
-    return _wrap_endpoint(route, methods=["OPTIONS"], **kwargs)
+def put(_route: str, **kwargs):
+    return route(_route, methods=[HTTPMethod.PUT], **kwargs)
 
 
-def head(route: str, **kwargs):
-    return _wrap_endpoint(route, methods=["HEAD"], **kwargs)
+def delete(_route: str, **kwargs):
+    return route(_route, methods=[HTTPMethod.DELETE], **kwargs)
 
 
-@bind(methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE", "CONNECT"])
-def method_names(*, methods: list[str]):
-    def method_names():
-        return methods
-    return method_names
+def patch(_route: str, **kwargs):
+    return route(_route, methods=[HTTPMethod.PATCH], **kwargs)
 
+
+def options(_route: str, **kwargs):
+    return route(_route, methods=[HTTPMethod.OPTIONS], **kwargs)
+
+
+def head(_route: str, **kwargs):
+    return route(_route, methods=[HTTPMethod.HEAD], **kwargs)
+
+
+del API_ROUTER
+del TYPE_CHECKING, Any
+del bind
+
+
+__all__ = [
+    "router",
+    "route",
+
+    "get",
+    "post",
+    "put",
+    "delete",
+    "patch",
+    "options",
+    "head",
+
+    "HTTPException",
+    "HTTPMethod",
+    "HTTPStatus",
+]

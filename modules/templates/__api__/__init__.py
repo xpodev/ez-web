@@ -1,10 +1,21 @@
-from .page_data import PageData
+from typing import TYPE_CHECKING
 
-from ..errors import TemplateNotFoundError
-from ..manager import TEMPLATE_MANAGER as __tm
-from ..template_package import TemplatePackage
-from ..template_pack import TemplatePack
-from ..template import Template, template
+
+if TYPE_CHECKING:
+    from modules.templates.errors import TemplateNotFoundError
+    from modules.templates.template_package import TemplatePackage
+    from modules.templates.template_pack import TemplatePack
+    from modules.templates.template import Template, TemplateParams, template
+else:
+    from ..errors import TemplateNotFoundError
+    from ..manager import TEMPLATE_MANAGER as __tm
+    from ..template_package import TemplatePackage
+    from ..template_pack import TemplatePack
+    from ..template import Template, TemplateParams, template
+
+
+class Empty(TemplateParams):
+    pass
 
 
 def get(name: str) -> "TemplatePack | Template":

@@ -9,7 +9,7 @@ class PageInfoModel(DatabaseModel):
 
     id: int = Column(Integer, primary_key=True)
     title: str = Column(String)
-    content: str = Column(String)
+    config: str = Column(String)
     slug: str = Column(String)
     template_name: str = Column(String)
 

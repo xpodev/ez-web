@@ -1,29 +1,22 @@
 import ez
 
 from ez.database import engine
-import ez.web
 
+from . import pages, router as _
 from .dbi import PAGE_REPOSITORY, PageInfoModel, PAGES_HISTORY_REPOSITORY
-from .router import pages_api_router
-
-from starlette.responses import HTMLResponse
-
-
-from jsx.renderer import render
-
-import ez.templates
-
-def make_page_route(page: PageInfoModel):
-    if not page.slug.startswith("/"):
-        page.slug = f"/{page.slug}"
+from .page_info import PageInfo
+from .routing import PAGE_ROUTER
 
 
-    template = ez.templates.get(page.template_name)
-
-    def page_route():
-        return HTMLResponse(render(template.render(page=page)))
-    
-    ez.web.get(page.slug)(page_route)
+def make_page_route(page_info: PageInfoModel):
+    info = PageInfo.model_validate({
+        "title": page_info.title,
+        "config": page_info.config,
+        "slug": page_info.slug,
+        "template_name": page_info.template_name
+    })
+    page = pages.create_page(info)
+    pages.add_page(page)
 
 
 @ez.events.on("App.Started")
@@ -36,5 +29,4 @@ def setup():
         make_page_route(page)
 
 
-ez.web.add_router("/api/pages", pages_api_router)
-
+ez.web.routing.mount(ez.site.SITE_URL, PAGE_ROUTER)

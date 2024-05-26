@@ -13,7 +13,7 @@ from .builtins.loader import EZPluginLoader
 
 from .config import PLUGINS_DIRECTORY, PLUGIN_MANIFEST_FILENAME
 
-from . import manager
+from . import manager, router
 
 
 def init_manager(host):
@@ -35,11 +35,10 @@ from .machinery.manifest import PluginManifest
 
 from ez.database import engine
 
-PLUGIN_REPOSITORY.connect(engine)
-
 
 @ez.events.on("App.Started")
 def load_plugins():
+    PLUGIN_REPOSITORY.connect(engine)
     plugins = PLUGIN_REPOSITORY.all()
     plugin_ids = [plugin.package_name for plugin in plugins]
 

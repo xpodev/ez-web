@@ -11,7 +11,9 @@ config = None
 def load_config(filename: str):
     with open(filename, "r") as file:
         config: dict = yaml.safe_load(file)
-        version = config.get("version", 1)
+        version = config.get("version", None)
+        if version is None:
+            raise ValueError("Site config version is not specified")
         if not configs.is_version_supported(version):
             raise ValueError(f"Unsupported site config version: v{version}")
         config_class = configs.get_config_class(version)

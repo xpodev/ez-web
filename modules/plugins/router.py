@@ -1,9 +1,10 @@
 import ez
-import ez.plugins
 
 
-@ez.web.get("/api/plugins")
-def get_plugins():
+router = ez.web.http.router("/plugins")
+
+@router.get("/")
+def get_plugins(_):
     return [
         {
             **plugin.info.model_dump(),
@@ -13,15 +14,19 @@ def get_plugins():
     ]
 
 
-@ez.post("/api/plugins/{plugin_id}/enable")
-def enable_plugin(plugin_id: str):
-    print(f"Enabling plugin {plugin_id}...")
-    ez.plugins.enable_plugin(plugin_id)
-    return "Plugin enabled!"
+@router.post("/{plugin_id}/enable")
+def enable_plugin(request):
+    # TODO: implement correctly
+    # plugin_id = request.path_params["plugin_id"]
+    # ez.plugins.enable_plugin(plugin_id)
+    # return "Plugin enabled!"
+    raise NotImplementedError
 
 
-@ez.post("/api/plugins/{plugin_id}/disable")
-def disable_plugin(plugin_id: str):
-    print(f"Disabling plugin {plugin_id}...")
-    ez.plugins.disable_plugin(plugin_id)
-    return "Plugin disabled!"
+@router.post("/{plugin_id}/disable")
+def disable_plugin(request):
+    # TODO: implement correctly
+    # plugin_id = request.path_params["plugin_id"]
+    # ez.plugins.disable_plugin(plugin_id)
+    # return "Plugin disabled!"
+    raise NotImplementedError
