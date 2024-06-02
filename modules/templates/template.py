@@ -16,7 +16,7 @@ Render: TypeAlias = Callable[[T], RenderResult]
 class Template(TemplateBase, Generic[T]):
     def __init__(self, name: str, params: type[T] | type, parent: "TemplatePack | None" = None):
         if not isinstance(params, type) or not issubclass(params, TemplateParams):
-            raise TypeError(f"Functional template parameter must be a subclass of BaseModel. Got {params}.")
+            raise TypeError(f"Functional template parameter must be a subclass of TemplateParams. Got {params}.")
 
         super().__init__(name, parent)
 
