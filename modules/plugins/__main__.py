@@ -79,6 +79,11 @@ def load_plugins():
     )
     plugin_manager.run_plugins(*plugin_ids)
 
+    plugins = plugin_manager.get_plugins()
+    ez.log.info(f"Loaded {len(plugins)} plugins:")
+    for plugin in plugins:
+        ez.log.info(f"\tLoaded plugin: {plugin.info.package_name}")
+
     ez.events.emit(Plugins.DidLoad, plugins)
 
 

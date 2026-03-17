@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from . import (
+        admin,
         data,
         database,
         events,
@@ -37,6 +38,7 @@ __all__ = [
     "EZ_PYTHON_EXECUTABLE",
     "SITE_DIR",
 
+    "admin",
     "data",
     "database",
     "events",

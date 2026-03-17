@@ -3,11 +3,15 @@ from typing import TYPE_CHECKING, Any
 from sandbox import current_plugin
 from utilities.utils import bind
 
-from ..http import HTTPException, HTTPMethod, HTTPStatus
-from ..routing import API_ROUTER
-
 if TYPE_CHECKING:
-    from ..routing import PluginRouter
+    from modules.web.routing import PluginRouter
+    from modules.web.context import get_request, set_request, request
+    from modules.web.http import HTTPException, HTTPMethod, HTTPStatus
+    from modules.web.routing import API_ROUTER
+else:
+    from ..context import get_request, set_request, request
+    from ..http import HTTPException, HTTPMethod, HTTPStatus
+    from ..routing import API_ROUTER
 
 
 _EMPTY: Any = object()
@@ -23,7 +27,7 @@ def current_router(api_router: "PluginRouter"):
 
 @bind(API_ROUTER)
 def router(api_router: "PluginRouter"):
-    def _router(route: str = _EMPTY):
+    def _router(route: str = _EMPTY, **kwargs):
         plugin = current_plugin()
 
         if not plugin.is_root:
@@ -38,7 +42,7 @@ def router(api_router: "PluginRouter"):
         if route is _EMPTY:
             route = '/' + plugin.oid
 
-        return api_router.add_router(plugin, route)
+        return api_router.add_router(plugin, route, **kwargs)
 
     return _router
 
@@ -107,4 +111,8 @@ __all__ = [
     "HTTPException",
     "HTTPMethod",
     "HTTPStatus",
+
+    "get_request",
+    "set_request",
+    "request",
 ]

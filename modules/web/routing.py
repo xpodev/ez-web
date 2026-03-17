@@ -21,11 +21,11 @@ class PluginRouter:
     def router(self):
         return self._router
     
-    def add_router(self, app: Application, route: str, *, cls: type[Router] = EZRouter) -> Router:
+    def add_router(self, app: Application, route: str, *args, cls: type[Router] = EZRouter, **kwargs) -> Router:
         if app in self._mounts:
             return cast(Router, self._mounts[app].app)
         
-        router = cls()
+        router = cls(*args, **kwargs)
         mount = Mount(route, app=router)
 
         if not app.is_root:

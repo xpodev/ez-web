@@ -16,3 +16,14 @@ def bind(*args, **kwargs) -> Callable[[Callable[B, Callable[P, T]]], Callable[P,
         return fn(*args, **kwargs)
     
     return wrapper
+
+
+def spacify(text: str, sep: str = ' ') -> str:
+    """
+    Takes in a string of either PascalCase or camelCase and return it split to words
+    with the given separator. 
+
+    Default separator is a single space.
+    """
+    return ''.join(sep + char if char.isupper() else char.strip() for char in text).strip()
+
